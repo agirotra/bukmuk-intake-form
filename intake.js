@@ -55,7 +55,9 @@
     guardianEmail:     "A grown-up's email (so we can reach your parent/guardian)",
     guardianPhone:     'Phone',
     consentPublish:    "I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.",
-    consentVoice:      "I understand only light edits are made and the child's voice is preserved.",
+    // consentVoice retired 2026-05-22: its "I understand light edits are made"
+    // is redundant with consentPublish's "(keeping the child's voice)" and the
+    // §IX marginalia. Importer accepts payloads with or without it.
     consentPhoto:      "I allow the author's photo to be printed.",
     consentLocation:   "I allow the author's city to be printed.",
     guardianSignature: 'Type your full name as a signature',
@@ -329,7 +331,7 @@
       }
     }
     // also count guardian required consents (they're checkboxes, not data-required)
-    const consents = ['consentPublish','consentVoice'];
+    const consents = ['consentPublish'];
     const consentReq = consents.length;
     const consentFilled = consents.filter(n => {
       const el = guardianForm.elements[n]; return el && el.checked;
@@ -446,8 +448,8 @@
       flag(emailEl.closest('.field'), 'email looks invalid');
     }
 
-    // Required consents
-    for (const name of ['consentPublish','consentVoice']){
+    // Required consents (only consentPublish; consentVoice retired 2026-05-22)
+    for (const name of ['consentPublish']){
       const el = guardianForm.elements[name];
       if (!el || !el.checked) errors.push(`${name} not ticked`);
     }
@@ -499,8 +501,8 @@
     }
     // consent checkboxes , emit the long label text when ticked (mirrors
     // how a real Tally export reads them; the importer's isChecked() does
-    // the heavy lifting either way)
-    for (const key of ['consentPublish','consentVoice','consentPhoto','consentLocation']){
+    // the heavy lifting either way). consentVoice retired 2026-05-22.
+    for (const key of ['consentPublish','consentPhoto','consentLocation']){
       const el = guardianForm.elements[key];
       if (el && el.checked) add(key, LABELS[key]);
     }

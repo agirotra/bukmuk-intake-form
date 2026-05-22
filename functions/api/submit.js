@@ -47,7 +47,8 @@ const FIELD_LABELS = {
   guardianEmail:     "A grown-up's email (so we can reach your parent/guardian)",
   guardianPhone:     'Phone',
   consentPublish:    "I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.",
-  consentVoice:      "I understand only light edits are made and the child's voice is preserved.",
+  // consentVoice retired 2026-05-22: redundant with consentPublish's
+  // "(keeping the child's voice)" clause + the §IX marginalia
   consentPhoto:      "I allow the author's photo to be printed.",
   consentLocation:   "I allow the author's city to be printed.",
   guardianSignature: 'Type your full name as a signature',
@@ -136,7 +137,7 @@ function validateOnServer(payload){
     errors.push('pen name chosen but penName is empty');
   }
   if (!isChecked(r.consentPublish)) errors.push('consentPublish not ticked');
-  if (!isChecked(r.consentVoice))   errors.push('consentVoice not ticked');
+  // consentVoice retired 2026-05-22 (was redundant with consentPublish)
   const assent = String(r.childAssent || '').trim().toLowerCase();
   if (!assent) errors.push('childAssent missing');
   else if (assent.startsWith('n')) errors.push('child did not assent (No)');
