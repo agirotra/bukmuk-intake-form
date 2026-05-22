@@ -242,7 +242,10 @@ h1.section-title em{
   border-bottom-color: var(--blue);
 }
 .input::placeholder, .textarea::placeholder{
-  color: var(--ink-soft); opacity:.45;
+  /* Lower opacity so example values like "Ananya Sharma" obviously look like
+     hints, not pre-filled fields. Parents glancing fast shouldn't think the
+     form is already someone else's. */
+  color: var(--ink-soft); opacity:.32;
   font-style: italic;
 }
 .textarea{

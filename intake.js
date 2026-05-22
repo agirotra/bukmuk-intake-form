@@ -188,7 +188,7 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       persist();
-      setSaveTag('saved', 'Saved on this device');
+      setSaveTag('saved', 'Saved , you can close and come back');
       updateProgress();
     }, SAVE_DEBOUNCE_MS);
   }
@@ -556,7 +556,7 @@
     } catch (err){
       submitBtn.removeAttribute('aria-busy');
       submitBtn.textContent = 'Send to Bukmuk →';
-      submitError.textContent = 'Couldn\'t send right now. Your story is still saved on this device. Please try again in a minute, or email hello@bukmuk.in.';
+      submitError.textContent = 'Couldn\'t send right now. Your story is still saved in this browser. Please try again in a minute, or email hello@bukmuk.in.';
       submitError.style.color = 'var(--err)';
       setSaveTag('error', 'Submit failed; saved locally');
     }
