@@ -577,25 +577,68 @@
     submitBtn.setAttribute('aria-busy', 'true');
     submitBtn.textContent = 'Sending…';
 
+    // Live counter on the button so users on slow networks see "Sending… 4s"
+    // rather than a static "Sending…" that looks frozen.
+    const startedAt = Date.now();
+    const counterTimer = setInterval(() => {
+      const secs = Math.floor((Date.now() - startedAt) / 1000);
+      submitBtn.textContent = secs > 0 ? `Sending… ${secs}s` : 'Sending…';
+    }, 500);
+
+    // Hard timeout (45s) so a network or browser hang doesn't strand the user.
+    // 45s is generous , our function responds in 1-3s typically even with
+    // a 250KB photo. Anything past 45s is a genuine failure worth surfacing.
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => controller.abort(), 45_000);
+
+    const log = (...a) => { try { console.log('[bukmuk-intake]', ...a); } catch {} };
+
     try {
+      log('build payload');
       const payload = buildPayload();
       const body = new FormData();
       body.append('payload', JSON.stringify(payload));
       if (fileBlobs.authorPhoto)   body.append('authorPhoto',   fileBlobs.authorPhoto);
       if (fileBlobs.authorArtwork) body.append('authorArtwork', fileBlobs.authorArtwork);
+      log('fetch start, fields=', payload.data.fields.length, 'photo=', !!fileBlobs.authorPhoto, 'drawing=', !!fileBlobs.authorArtwork);
 
-      const res = await fetch('/api/submit', { method: 'POST', body });
+      const res = await fetch('/api/submit', { method: 'POST', body, signal: controller.signal });
+      log('fetch resolved, status=', res.status);
       if (!res.ok){
         const t = await res.text().catch(() => '');
         throw new Error(t || `submission failed (${res.status})`);
       }
       const json = await res.json().catch(() => ({}));
+      log('json parsed, reference=', json.reference);
       const ref = json.reference || ('BUK-' + Math.random().toString(36).slice(2, 8).toUpperCase());
-      showThankyou(ref);
+
+      clearInterval(counterTimer);
+      clearTimeout(timeoutTimer);
+
+      // Wrap showThankyou in try/catch so if it ever throws, the user still
+      // sees the success state via a fallback message instead of being
+      // stranded on "Sending…".
+      try {
+        log('showing thank-you');
+        showThankyou(ref);
+      } catch (uiErr) {
+        log('showThankyou threw:', uiErr && uiErr.message);
+        // Fallback: at least tell them their story made it through
+        submitBtn.removeAttribute('aria-busy');
+        submitBtn.textContent = 'Sent ✓';
+        submitError.style.color = 'var(--blue, #3744e2)';
+        submitError.textContent = `Sent! Your reference is ${ref}. (UI fallback , the success screen failed to render.)`;
+      }
     } catch (err){
+      clearInterval(counterTimer);
+      clearTimeout(timeoutTimer);
+      log('submit failed:', err && err.message);
       submitBtn.removeAttribute('aria-busy');
       submitBtn.textContent = 'Send to Bukmuk →';
-      submitError.textContent = 'Couldn\'t send right now. Your story is still saved in this browser. Please try again in a minute, or email hello@bukmuk.in.';
+      const isTimeout = err && err.name === 'AbortError';
+      submitError.textContent = isTimeout
+        ? "Submission is taking longer than usual. Your story is still saved in this browser. Please check your internet and try again, or email hello@bukmuk.in."
+        : "Couldn't send right now. Your story is still saved in this browser. Please try again in a minute, or email hello@bukmuk.in.";
       submitError.style.color = 'var(--err)';
       setSaveTag('error', 'Submit failed; saved locally');
     }
