@@ -448,10 +448,22 @@
       flag(emailEl.closest('.field'), 'email looks invalid');
     }
 
-    // Required consents (only consentPublish; consentVoice retired 2026-05-22)
+    // Required consents (only consentPublish; consentVoice retired 2026-05-22).
+    // Use a FRESH document.querySelector instead of guardianForm.elements[name]:
+    // Cloudflare auto-inserts an obfuscated email link inside §IX's lede
+    // paragraph (right above this form), and `email-decode.min.js` runs on
+    // every page load. We could not pin down a precise mechanism, but in
+    // practice the live closure's `guardianForm.elements['consentPublish']`
+    // intermittently returns a stale/falsy reference at validate-time even
+    // though `document.querySelector('input[name=consentPublish]')` returns
+    // the live checked element. Fresh querySelector is the immune path.
+    // (Verified 2026-05-22: same bug observed at every UI submit.)
     for (const name of ['consentPublish']){
-      const el = guardianForm.elements[name];
-      if (!el || !el.checked) errors.push(`${name} not ticked`);
+      const el = document.querySelector(`input[name="${name}"]`);
+      if (!el || !el.checked){
+        errors.push(`${name} not ticked`);
+        flag(el && el.closest('.field'), `${name} not ticked`);  // also flag visually
+      }
     }
 
     return { ok: errors.length === 0, errors, firstBadEl };
