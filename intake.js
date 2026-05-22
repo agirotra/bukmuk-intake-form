@@ -637,8 +637,8 @@
       submitBtn.textContent = 'Send to Bukmuk →';
       const isTimeout = err && err.name === 'AbortError';
       submitError.textContent = isTimeout
-        ? "Submission is taking longer than usual. Your story is still saved in this browser. Please check your internet and try again, or email hello@bukmuk.in."
-        : "Couldn't send right now. Your story is still saved in this browser. Please try again in a minute, or email hello@bukmuk.in.";
+        ? "Submission is taking longer than usual. Your story is still saved in this browser. Please check your internet and try again, or email helpdesk@bukmuk.com."
+        : "Couldn't send right now. Your story is still saved in this browser. Please try again in a minute, or email helpdesk@bukmuk.com.";
       submitError.style.color = 'var(--err)';
       setSaveTag('error', 'Submit failed; saved locally');
     }

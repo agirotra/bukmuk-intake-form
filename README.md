@@ -315,7 +315,7 @@ the editorial commitment.
 - One-command "fetch all new submissions from R2 and run the importer"
   helper (planned for the editor repo, not this one).
 - Email notification per submission via Cloudflare Email Workers /
-  Resend to `hello@bukmuk.in`.
+  Resend to `helpdesk@bukmuk.com`.
 - Optional per-school landing pages parameterised by `?cohort=...`.
 - Saved-draft sharing link (so a kid can save halfway and a parent can
   finish the consent on a different device).
