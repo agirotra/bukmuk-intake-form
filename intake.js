@@ -584,7 +584,7 @@
     window.removeEventListener('beforeunload', beforeUnloadGuard);
     persist();          // last save (no-op after submitted=true, kept for symmetry)
     try { localStorage.removeItem(STORAGE_KEY); } catch {}
-    document.querySelectorAll('.form-shell, .form-shell-guardian').forEach(el => el.classList.add('is-submitted'));
+    document.querySelectorAll('.form-shell, .form-shell-guardian, .welcome-section').forEach(el => el.classList.add('is-submitted'));
     const ty = $('#thankyou');
     if (ty) ty.classList.add('is-shown');
     const refEl = $('#refCode');

@@ -614,7 +614,11 @@ h1.section-title em{
 .colophon a{ color: var(--lime); text-decoration: none }
 
 /* ── confirmation screen ───────────────────────────────────────────────── */
+/* Hide everything that isn't the thank-you after a successful submit.
+   The .thankyou block already renders below the welcome and form, so
+   when both are display:none, the thank-you sits at the natural top. */
 .thankyou{ display: none }
+.welcome-section.is-submitted{ display: none }
 .thankyou.is-shown{ display: block }
 .form-shell.is-submitted{ display: none }
 .thankyou .frame{ padding-top: 96px }
