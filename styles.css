@@ -65,10 +65,13 @@ body{
 }
 
 /* ── masthead: real Bukmuk logo on cream paper ──────────────────────────── */
+/* Masthead: tightened 2026-05-22 , was eating ~210px of vertical space
+   before the form even started. Now ~120px, which still has editorial
+   presence without dominating above-the-fold. */
 .masthead{
   background: var(--paper);
   color: var(--ink);
-  padding: 28px 28px 0;
+  padding: 16px 28px 0;
   position: relative;
   border-bottom: 1px solid var(--rule);
 }
@@ -81,17 +84,18 @@ body{
   color: var(--ink-soft);
 }
 .masthead-row small{
-  display:block; margin-top:4px; letter-spacing:.14em;
+  display:block; margin-top:3px; letter-spacing:.14em;
   color: var(--ink-soft); opacity:.85;
 }
 .masthead-row .masthead-tag{ color: var(--blue); font-weight: 600 }
 .masthead-row .masthead-meta-right{ text-align: right }
 .logo-wrap{
-  max-width: 1100px; margin: 18px auto 26px;
+  max-width: 1100px; margin: 8px auto 14px;
   text-align: center;
 }
 .logo-wrap img{
-  height: clamp(54px, 9vw, 88px);
+  /* Smaller cap , still recognisable, doesn't dominate the viewport. */
+  height: clamp(40px, 6vw, 62px);
   width: auto; display: inline-block;
 }
 .masthead-rule{
