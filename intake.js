@@ -251,6 +251,30 @@
     if (storyCounter) storyCounter.classList.toggle('ok', n >= MIN_STORY_WORDS);
   }
 
+  // ─── Live preview for "How should we name you?" credit options ─────────
+  // The radio sub-labels show how the author's name will appear in print
+  // for each option. Originally these were hardcoded "Ananya Sharma" etc.,
+  // which felt like the form was already filled in with someone else's
+  // data. Now they update live from authorName / authorAge / authorLocation.
+  function onCreditExamplesChange(){
+    const name = (form.elements.authorName?.value || '').trim();
+    const ageEl = $$('input[name=authorAge]:checked')[0];
+    const age   = ageEl ? ageEl.value : '';
+    const loc   = (form.elements.authorLocation?.value || '').trim();
+    const first = name.split(/\s+/)[0] || '';
+
+    const set = (key, text) => {
+      const el = document.querySelector(`[data-credit-example="${key}"]`);
+      if (el) el.textContent = text;
+    };
+    set('full',           name  || 'e.g. Ananya Sharma');
+    set('first-only',     first || 'e.g. Ananya');
+    // Comma-join only the parts the user has actually entered yet
+    const parts = [first || 'e.g. Ananya', age || '11', loc || 'Delhi'];
+    const usingPlaceholders = !first || !age || !loc;
+    set('first-age-city', (usingPlaceholders ? 'e.g. ' : '') + [first || 'Ananya', age || '11', loc || 'Delhi'].join(', '));
+  }
+
   // ─── Visually mark the chosen radio card ───────────────────────────────
   function syncRadioCards(){
     for (const group of $$('.radios')){
@@ -345,8 +369,8 @@
   }
 
   // ─── Wire up listeners ────────────────────────────────────────────────
-  form.addEventListener('input',  () => { scheduleSave(); onStoryChange(); syncRadioCards(); });
-  form.addEventListener('change', () => { scheduleSave(); onAgeChange(); onCreditAsChange(); syncRadioCards(); });
+  form.addEventListener('input',  () => { scheduleSave(); onStoryChange(); onCreditExamplesChange(); syncRadioCards(); });
+  form.addEventListener('change', () => { scheduleSave(); onAgeChange(); onCreditAsChange(); onCreditExamplesChange(); syncRadioCards(); });
   guardianForm.addEventListener('input',  scheduleSave);
   guardianForm.addEventListener('change', () => { scheduleSave(); syncRadioCards(); });
 
@@ -354,6 +378,7 @@
   restore();
   onAgeChange();
   onStoryChange();
+  onCreditExamplesChange();
   syncRadioCards();
   updateProgress();
 
