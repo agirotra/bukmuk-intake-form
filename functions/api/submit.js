@@ -159,8 +159,150 @@ function refFromId(id){
   return 'BUK-' + id.replace(/-/g, '').slice(0, 6).toUpperCase();
 }
 
+// ─── Notification emails (via AWS SES) ─────────────────────────────────
+//
+// On every successful submission we fire two emails (in the background via
+// ctx.waitUntil so the parent's POST response is never blocked):
+//
+//   1. To the editor (NOTIFY_TO env var, default abhinav.girotra@gmail.com)
+//      , short summary so the editor knows to go check the inbox.
+//   2. To the parent (guardianEmail field from the form)
+//      , warm confirmation with the reference + what-happens-next timeline.
+//
+// SES creds + region + sender come from the Pages project's env vars:
+//   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY  (encrypted, dedicated IAM user)
+//   AWS_REGION       , e.g. ap-south-1
+//   SES_FROM_ADDRESS , e.g. editor@bukmuk.com (verified domain identity)
+//   NOTIFY_TO        , editor's inbox; falls back to abhinav.girotra@gmail.com
+//   SES_REPLY_TO     , where parent replies should land; falls back to NOTIFY_TO
+//
+// If any of the SES vars are missing, we log and skip , submission still
+// succeeds. This lets the form ship before SES is fully configured.
+
+import { sendSesEmail } from '../_lib/aws-ses.js';
+
+function peek(payload){
+  const fields = (payload && payload.data && payload.data.fields) || [];
+  const get = key => {
+    const f = fields.find(x => x.key === key);
+    return f ? String(f.value || '').trim() : '';
+  };
+  return {
+    authorName:   get('authorName'),
+    authorAge:    get('authorAge'),
+    storyTitle:   get('storyTitle'),
+    story:        get('story'),
+    book:         get('book'),
+    channel:      get('channel'),
+    cohort:       get('cohort'),
+    guardianEmail: get('guardianEmail'),
+    guardianName:  get('guardianName'),
+  };
+}
+
+function wordCountStr(s){
+  return String(s || '').trim().split(/\s+/).filter(Boolean).length;
+}
+
+function firstName(full){
+  if (!full) return 'your child';
+  return String(full).trim().split(/\s+/)[0];
+}
+
+async function sendEditorNotification(env, p, meta){
+  const to = env.NOTIFY_TO || 'abhinav.girotra@gmail.com';
+  const replyTo = env.SES_REPLY_TO || to;
+  const lines = [
+    `Bukmuk Authors' Intake , new submission`,
+    ``,
+    `Author:       ${p.authorName || '(unknown)'}${p.authorAge ? ` (age ${p.authorAge})` : ''}`,
+    `Story title:  ${p.storyTitle || '(untitled)'}`,
+    `Word count:   ${wordCountStr(p.story)}`,
+    `Target book:  ${p.book || '(not specified)'}`,
+    p.channel ? `Channel:      ${p.channel}` : null,
+    p.cohort  ? `Cohort:       ${p.cohort}`  : null,
+    `Reference:    ${meta.reference}`,
+    `Received:     ${meta.receivedAt}`,
+    ``,
+    `Open the editor's inbox to review and import:`,
+    `  http://127.0.0.1:8084/#/intake`,
+    ``,
+    `R2 object key (for manual pull if needed):`,
+    `  bukmuk-intake-submissions/${meta.id}.json`,
+  ].filter(Boolean).join('\n');
+
+  await sendSesEmail({
+    env,
+    from: env.SES_FROM_ADDRESS,
+    to,
+    replyTo,
+    subject: `New submission: ${p.storyTitle || '(untitled)'} by ${p.authorName || 'an author'}`,
+    text: lines,
+  });
+}
+
+async function sendParentConfirmation(env, p, meta){
+  if (!p.guardianEmail){
+    console.log('[intake] no guardianEmail on payload; skipping parent confirmation');
+    return;
+  }
+  const replyTo = env.SES_REPLY_TO || env.NOTIFY_TO || 'abhinav.girotra@gmail.com';
+  const child = firstName(p.authorName);
+  const greet = p.guardianName ? `Hello ${firstName(p.guardianName)},` : `Hello,`;
+
+  const text = [
+    greet,
+    ``,
+    `Thank you for sending us ${child}'s story, "${p.storyTitle || '(untitled)'}". We have it safely.`,
+    ``,
+    `Your reference is ${meta.reference}. Keep it in case you ever need to write to us about this submission.`,
+    ``,
+    `What happens next:`,
+    `  ,  Within a fortnight, a real editor will read the story and write back to you and ${child}. We'll share what we'd like to gently edit and ask before changing anything that matters.`,
+    `  ,  Within about 60 days, you'll see an edited proof with every change marked.`,
+    `  ,  Before printing, we'll always ask both of you for a final yes.`,
+    ``,
+    `To withdraw at any time before publication, reply to this email or write to hello@bukmuk.in. We'll remove the story and photo from our systems.`,
+    ``,
+    `, Bukmuk Editorial Team`,
+    `  bukmukpublishing.com`,
+  ].join('\n');
+
+  await sendSesEmail({
+    env,
+    from: env.SES_FROM_ADDRESS,
+    to: p.guardianEmail,
+    replyTo,
+    subject: `We have ${child}'s story , Bukmuk Authors' Intake`,
+    text,
+  });
+}
+
+// Wrapper: try both emails independently, log on failure, never throw.
+async function fireNotificationEmails(env, payload, meta){
+  if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY || !env.SES_FROM_ADDRESS){
+    console.log('[intake] SES env vars missing; skipping email notifications.');
+    return;
+  }
+  const p = peek(payload);
+  // Editor notification , independent of parent send
+  try {
+    await sendEditorNotification(env, p, meta);
+    console.log(`[intake] editor notification sent for ${meta.reference}`);
+  } catch (err) {
+    console.error('[intake] editor notification failed:', err && err.message);
+  }
+  // Parent confirmation , independent of editor send
+  try {
+    await sendParentConfirmation(env, p, meta);
+    console.log(`[intake] parent confirmation sent for ${meta.reference}`);
+  } catch (err) {
+    console.error('[intake] parent confirmation failed:', err && err.message);
+  }
+}
+
 // ─── Handler ──────────────────────────────────────────────────────────────
-export async function onRequestPost({ request, env }){
+export async function onRequestPost({ request, env, waitUntil }){
   // Light rate-limit (Cloudflare gives us cf-connecting-ip; the surrounding
   // Pages config + WAF should do the heavy lifting, this is defence in depth).
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
@@ -272,6 +414,13 @@ export async function onRequestPost({ request, env }){
       // Local-dev fallback: just log; the test harness reads from the
       // request, not from R2.
       console.log('[intake] R2 binding INTAKE_SUBMISSIONS missing, dropping submission to stdout:\n', JSON.stringify(payload, null, 2));
+    }
+
+    // Fire-and-forget the email notifications via waitUntil so the parent's
+    // POST response returns immediately. Email failure never affects the
+    // user-facing submit success.
+    if (typeof waitUntil === 'function'){
+      waitUntil(fireNotificationEmails(env, payload, meta));
     }
 
     return json({ ok: true, id, reference: ref });

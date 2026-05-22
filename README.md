@@ -121,6 +121,66 @@ so you can roll back through history if needed.
 
 ---
 
+## Email notifications (AWS SES)
+
+On every successful submission, the Function fires **two emails** in the
+background (via `waitUntil`, so the parent's POST response is never
+blocked by the email send):
+
+1. **Editor notification** , short summary of the submission, sent to
+   `NOTIFY_TO` (defaults to `abhinav.girotra@gmail.com`).
+2. **Parent confirmation** , warm "we have your story" + reference + 
+   what-happens-next timeline, sent to the `guardianEmail` field from the
+   form.
+
+If any of the SES env vars below are missing, the Function logs and
+skips the emails , submissions still complete successfully.
+
+### Required env vars on the Pages project
+
+Set these in **Cloudflare Dashboard → Workers & Pages → bukmuk-intake →
+Settings → Environment variables** (Production, mark secrets as Encrypted):
+
+| Variable | Example | Notes |
+|---|---|---|
+| `AWS_ACCESS_KEY_ID` | `AKIA…` | From the dedicated IAM user (see below). Encrypt. |
+| `AWS_SECRET_ACCESS_KEY` | `…` | Same IAM user. **Encrypt.** |
+| `AWS_REGION` | `ap-south-1` | SES region. |
+| `SES_FROM_ADDRESS` | `editor@bukmuk.com` | Any address on a domain verified in SES. |
+| `NOTIFY_TO` | `abhinav.girotra@gmail.com` | Optional. Defaults to the address above. |
+| `SES_REPLY_TO` | `abhinav.girotra@gmail.com` | Optional. `Reply-To` header on both emails so parent replies don't bounce. Defaults to `NOTIFY_TO`. |
+
+### Minimal IAM policy for the dedicated user
+
+Create a new IAM user (e.g. `cf-pages-intake-ses`) with programmatic
+access only. Attach an inline policy:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["ses:SendEmail"],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+The smaller scope keeps blast radius minimal if the keys ever leak.
+
+### SES sandbox check
+
+New SES accounts start in **Sandbox mode** , you can only send to
+addresses verified in your SES. To send parent confirmations to
+arbitrary `guardianEmail` addresses, you need to **request production
+access** in the SES dashboard (usually approved in 24-48h). Until then,
+editor notifications work (verify `abhinav.girotra@gmail.com` as a
+recipient) but parent emails will bounce for non-verified addresses.
+
+---
+
 ## Local development
 
 ```bash
