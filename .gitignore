@@ -1,0 +1,16 @@
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor junk
+.vscode/
+.idea/
+*.swp
+
+# Local-only
+.dev.vars
+.wrangler/
+node_modules/
+
+# Logs
+*.log

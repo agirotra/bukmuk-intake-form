@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Send Bukmuk your story · Authors' Intake</title>
+<meta name="description" content="Bukmuk Publishing's authors' intake form. Children aged 7 to 15 can send us their story. Light edits only; your voice is preserved.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/bukmuk-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<a class="sr-only" href="#start">Skip to form</a>
+
+<div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- ─── Masthead ──────────────────────────────────────────────────────── -->
+<header class="masthead">
+  <div class="masthead-row">
+    <div class="masthead-meta-left">
+      Bukmuk Library &nbsp;/&nbsp; Publishing
+      <small>Vol. XI &nbsp;·&nbsp; Authors' Intake</small>
+    </div>
+    <div class="masthead-meta-right">
+      <span class="masthead-tag">Open for submissions</span>
+      <small>Monsoon 2026 anthology &nbsp;·&nbsp; Ages 7 to 15</small>
+    </div>
+  </div>
+  <div class="logo-wrap">
+    <img src="/assets/bukmuk-logo.png" alt="Bukmuk">
+  </div>
+</header>
+<div class="masthead-rule" aria-hidden="true"></div>
+
+<!-- ─── Welcome ────────────────────────────────────────────────────────── -->
+<section class="sheet">
+  <div class="welcome">
+    <p class="hello">Hello, <u>author</u>.<br><span style="color:var(--blue)"><em>This is your page.</em></span></p>
+    <p class="standfirst">
+      We publish books written <em>by</em> young authors, not for them, by them. Use this form to send us your story. We'll edit it the way a careful friend would: <em>only enough to keep the reader from getting stuck, and never enough to change your voice.</em>
+    </p>
+    <div class="pact">
+      <div class="card">
+        <span class="n">01 &nbsp;The deal</span>
+        <h3>We keep your voice.</h3>
+        <p>Hindi, Tamil, Bengali, the way your dadi says it. We don't iron out the way you write.</p>
+      </div>
+      <div class="card">
+        <span class="n">02 &nbsp;What you need</span>
+        <h3>About twenty minutes.</h3>
+        <p>Your story, a few questions, a clear photo (if you want one). A grown-up signs off at the end.</p>
+      </div>
+      <div class="card">
+        <span class="n">03 &nbsp;What happens next</span>
+        <h3>An editor writes back.</h3>
+        <p>Within a fortnight you'll hear from a real human. Light edits only. We always ask before changing anything.</p>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span><b>Save &amp; resume</b> on this device</span>
+      <span><b>End-to-end</b> no analytics</span>
+      <span><b>Privacy</b> location &amp; photo only if your grown-up ticks the box</span>
+    </div>
+    <button class="btn primary" type="button" id="startBtn">Start writing →</button>
+    <span class="save-tag" id="saveTag" style="margin-left:14px">Autosaving as you type</span>
+  </div>
+</section>
+
+<!-- ─── The form ───────────────────────────────────────────────────────── -->
+<form id="intakeForm" class="form-shell" novalidate>
+
+  <!-- honeypot: bots fill this, humans don't see it -->
+  <div class="hp" aria-hidden="true">
+    <label>Leave this field empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+  </div>
+
+  <!-- I. About you ─────────────────────────────────────────────────────── -->
+  <section class="sheet" id="start">
+    <article class="frame">
+      <span class="folio-corner">Folio i / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">I.</span> About you</div>
+        <h1 class="section-title">Who are <em>you,</em><br>and where are you writing from?</h1>
+        <p class="lede">Tell us the way you'd tell a friend you just met. The way you actually talk is the way we want to publish you.</p>
+
+        <div class="field" data-required>
+          <label class="cap" for="authorName">Your name <span class="req">required</span></label>
+          <input class="input" id="authorName" name="authorName" type="text" required autocomplete="given-name" placeholder="Ananya Sharma">
+          <div class="field-error">We need a name to publish under.</div>
+        </div>
+
+        <div class="row2">
+          <div class="field" data-required>
+            <label class="cap" id="ageLabel">How old are you? <span class="req">required</span></label>
+            <div class="agewheel" role="radiogroup" aria-labelledby="ageLabel">
+              <input id="age7" type="radio" name="authorAge" value="7" required><label for="age7">7</label>
+              <input id="age8" type="radio" name="authorAge" value="8"><label for="age8">8</label>
+              <input id="age9" type="radio" name="authorAge" value="9"><label for="age9">9</label>
+              <input id="age10" type="radio" name="authorAge" value="10"><label for="age10">10</label>
+              <input id="age11" type="radio" name="authorAge" value="11"><label for="age11">11</label>
+              <input id="age12" type="radio" name="authorAge" value="12"><label for="age12">12</label>
+              <input id="age13" type="radio" name="authorAge" value="13"><label for="age13">13</label>
+              <input id="age14" type="radio" name="authorAge" value="14"><label for="age14">14</label>
+              <input id="age15" type="radio" name="authorAge" value="15"><label for="age15">15</label>
+            </div>
+            <p class="hint">We use this to ask the right kind of questions later. Honestly.</p>
+            <div class="field-error">Tap your age.</div>
+          </div>
+
+          <div class="field" data-required>
+            <label class="cap" for="authorLocation">Which city or town? <span class="req">required</span></label>
+            <input class="input" id="authorLocation" name="authorLocation" type="text" autocomplete="address-level2" placeholder="Delhi">
+            <p class="hint">Printed only if your grown-up ticks the city consent box later. Otherwise we keep it for ourselves.</p>
+            <div class="field-error">Just the city or town is fine.</div>
+          </div>
+        </div>
+
+        <div class="field" data-required>
+          <label class="cap" for="authorBio">Tell us about you, in a few lines <span class="req">required</span></label>
+          <div class="textwrap">
+            <textarea class="textarea" id="authorBio" name="authorBio" required placeholder="The way you'd tell a friend. Pets, school, what you're into right now." spellcheck="false"></textarea>
+          </div>
+          <div class="field-error">A few lines about you, please.</div>
+        </div>
+
+        <div class="field" data-required>
+          <label class="cap">How should we name you in the book? <span class="req">required</span></label>
+          <div class="radios" role="radiogroup">
+            <label><input type="radio" name="creditAs" value="full" required><span><b>My full name</b><span class="sub">Ananya Sharma</span></span></label>
+            <label><input type="radio" name="creditAs" value="first-only"><span><b>Just my first name</b><span class="sub">Ananya</span></span></label>
+            <label><input type="radio" name="creditAs" value="first-age-city"><span><b>First name, age, city</b><span class="sub">Ananya, 11, Delhi</span></span></label>
+            <label><input type="radio" name="creditAs" value="pen"><span><b>A pen name</b><span class="sub">a name only Bukmuk knows is you</span></span></label>
+          </div>
+          <div class="field-error">Choose how you'd like your name to appear.</div>
+        </div>
+
+        <div class="conditional" id="penNameWrap">
+          <div class="field" data-required-if="creditAs=pen">
+            <label class="cap" for="penName">Your pen name <span class="req">required</span></label>
+            <input class="input" id="penName" name="penName" type="text" placeholder="Moonbeam Mehta">
+            <p class="hint">The name that will appear on the cover. You can change it later if you want.</p>
+            <div class="field-error">Pen name can't be empty if you picked one.</div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="marginalia">
+        <span class="tag">Editor's note</span>
+        <p>Your <em>voice</em> is sacred to us. If you write <em>"the door were broken"</em> on purpose, we keep it on purpose.</p>
+        <p>If a Hindi word fits better than the English one, use it. We'll keep it in the book exactly as you wrote it.</p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- II. Photo & artwork (optional) ───────────────────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio ii / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">II.</span> Photo &amp; drawing (optional)</div>
+        <h1 class="section-title">A <em>face,</em> and maybe a drawing.</h1>
+        <p class="lede">If you'd like a photo of you printed at the back of the book, share one. If you've drawn something for the story, share that too. Both optional.</p>
+
+        <div class="field">
+          <label class="cap">A clear photo of you (as big as you have it)</label>
+          <label class="drop" for="authorPhoto" id="authorPhotoDrop">
+            <div class="icon" data-icon="+">+</div>
+            <div class="copy" data-copy>
+              <b>Drop a photo or tap to choose</b>
+              <span class="meta">JPG / PNG / WEBP &nbsp;·&nbsp; Up to 15 MB &nbsp;·&nbsp; Printed only with consent</span>
+            </div>
+            <input type="file" id="authorPhoto" name="authorPhoto" accept="image/jpeg,image/png,image/webp">
+          </label>
+        </div>
+
+        <div class="field">
+          <label class="cap">Any drawing of your own you'd like us to see</label>
+          <label class="drop" for="authorArtwork" id="authorArtworkDrop">
+            <div class="icon" data-icon="✎">✎</div>
+            <div class="copy" data-copy>
+              <b>Drop a drawing or tap to choose</b>
+              <span class="meta">JPG / PNG / WEBP &nbsp;·&nbsp; Up to 15 MB &nbsp;·&nbsp; Pen, pencil, paint, anything</span>
+            </div>
+            <input type="file" id="authorArtwork" name="authorArtwork" accept="image/jpeg,image/png,image/webp">
+          </label>
+        </div>
+
+        <div class="field">
+          <label class="cap" for="artworkCaption">What is the drawing of?</label>
+          <input class="input" id="artworkCaption" name="artworkCaption" type="text" placeholder="The peepal trees behind my house">
+        </div>
+      </div>
+
+      <aside class="marginalia">
+        <span class="tag">No pressure</span>
+        <p>You don't need a photo for your story to be in the book. A drawing isn't required either, <em>but if you have one</em> we love showing them.</p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- III. Your story ──────────────────────────────────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio iii / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">III.</span> Your story</div>
+        <h1 class="section-title">Now the <em>important</em> bit.</h1>
+        <p class="lede">Paste it, type it, dictate it to a grown-up. Write it exactly how you want it printed. We don't restructure sentences, we don't swap your words for "better" ones.</p>
+
+        <div class="field" data-required>
+          <label class="cap" for="storyTitle">Your story's title <span class="req">required</span></label>
+          <input class="input" id="storyTitle" name="storyTitle" type="text" required placeholder="The Door in the Forest">
+          <div class="field-error">Even a working title is fine.</div>
+        </div>
+
+        <div class="field" data-required>
+          <label class="cap" for="story">Paste or type your whole story <span class="req">required</span></label>
+          <div class="textwrap">
+            <textarea class="textarea story" id="story" name="story" required spellcheck="false" placeholder="Once upon a time, but not really…"></textarea>
+            <div class="counter" id="storyCounter">Word count &nbsp;<b><span id="storyCount">0</span> / 30 minimum</b></div>
+          </div>
+          <div class="field-error">Your story needs at least 30 words.</div>
+        </div>
+
+        <div class="row2" style="margin-top:36px">
+          <div class="field">
+            <label class="cap">Does your story have chapters?</label>
+            <div class="radios" role="radiogroup">
+              <label><input type="radio" name="hasChapters" value="No"><span><b>No, it's one piece</b><span class="sub">most stories are</span></span></label>
+              <label><input type="radio" name="hasChapters" value="Yes"><span><b>Yes, with chapter titles</b><span class="sub">we'll keep them as you wrote them</span></span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="cap" for="languageNote">Words from Hindi, Tamil, or another language? List them.</label>
+            <input class="input" id="languageNote" name="languageNote" type="text" placeholder="dadi, peepal, bilkul">
+            <p class="hint">So our typesetter doesn't "correct" them. Add as many as you like.</p>
+          </div>
+        </div>
+
+        <div class="field" data-required style="margin-top: 28px">
+          <label class="cap" for="inspiration">What gave you the idea for this story? <span class="req">required</span></label>
+          <div class="textwrap">
+            <textarea class="textarea" id="inspiration" name="inspiration" required placeholder="A dream, a song, a thing your grandmother said…" style="min-height:140px"></textarea>
+          </div>
+          <div class="field-error">One or two lines is enough.</div>
+        </div>
+      </div>
+
+      <aside class="marginalia">
+        <span class="tag">From the style sheet</span>
+        <p>We <em>preserve repetition</em>. If you repeat a word on purpose, that's a rhythm choice, not a mistake.</p>
+        <p>We fix only what stops a reader from understanding. Spelling slips, full stops, capitalising proper nouns. That's it.</p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- IV. Behind the scenes (freeform) ──────────────────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio iv / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">IV.</span> Behind the scenes</div>
+        <h1 class="section-title">The <em>making-of</em>.</h1>
+        <p class="lede">For the bonus pages at the back of the book. Tell us how the writing actually went, in your own words. Skip if you'd rather not.</p>
+
+        <div class="field">
+          <label class="cap" for="behindTheStory">What's the story behind writing it, how did it go?</label>
+          <div class="textwrap">
+            <textarea class="textarea" id="behindTheStory" name="behindTheStory" placeholder="I started it on a flight. Got stuck on the middle bit for a week…" style="min-height:160px"></textarea>
+          </div>
+        </div>
+      </div>
+      <aside class="marginalia">
+        <span class="tag">In your own words</span>
+        <p>Readers love hearing the writer's voice next to the story. It doesn't need to be long. <em>Three sentences</em> is plenty.</p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- V. Author Q&A (age-bracketed) ─────────────────────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio v / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">V.</span> A few questions for the back pages</div>
+        <h1 class="section-title">Author <em>Q &amp; A</em>.</h1>
+        <p class="lede" id="qaIntro">The set of questions you see here depends on your age. Tap your age first, then answer the ones that feel right. Blank stays blank.</p>
+
+        <!-- early bracket (7-9) -->
+        <div class="qa-set" data-bracket="early" hidden>
+          <div class="field">
+            <label class="cap" for="qa_early_1">What is your story about, in your own words?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_early_1" name="qa_early_1" style="min-height:120px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_early_2">Which part was the most fun to write?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_early_2" name="qa_early_2" style="min-height:120px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_early_3">What do you want a reader to feel?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_early_3" name="qa_early_3" style="min-height:120px"></textarea></div>
+          </div>
+        </div>
+
+        <!-- mid bracket (10-12) -->
+        <div class="qa-set" data-bracket="mid" hidden>
+          <div class="field">
+            <label class="cap" for="qa_mid_1">Where did the idea come from?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_mid_1" name="qa_mid_1" style="min-height:130px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_mid_2">What was the trickiest bit to get right?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_mid_2" name="qa_mid_2" style="min-height:130px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_mid_3">What would you tell another kid who wants to write?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_mid_3" name="qa_mid_3" style="min-height:130px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_mid_4">A favourite line of yours, and why</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_mid_4" name="qa_mid_4" style="min-height:130px"></textarea></div>
+          </div>
+        </div>
+
+        <!-- upper bracket (13-15) -->
+        <div class="qa-set" data-bracket="upper" hidden>
+          <div class="field">
+            <label class="cap" for="qa_up_1">What were you trying to explore with this piece?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_up_1" name="qa_up_1" style="min-height:140px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_up_2">What changed between your first idea and the final story?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_up_2" name="qa_up_2" style="min-height:140px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_up_3">What are you proudest of, what would you still change?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_up_3" name="qa_up_3" style="min-height:140px"></textarea></div>
+          </div>
+          <div class="field">
+            <label class="cap" for="qa_up_4">Advice for a younger writer?</label>
+            <div class="textwrap"><textarea class="textarea" id="qa_up_4" name="qa_up_4" style="min-height:140px"></textarea></div>
+          </div>
+        </div>
+
+        <p class="lede" id="qaPlaceholder" style="opacity:.6">Pick your age above to see the questions tailored to you.</p>
+      </div>
+
+      <aside class="marginalia">
+        <span class="tag">Tailored to you</span>
+        <p>The set you see depends on your age. Younger writers get three quick ones; older writers get four that go deeper.</p>
+        <p>Only what you answer gets printed. <em>Blank stays blank.</em></p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- VI. Fun facts (optional) ──────────────────────────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio vi / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">VI.</span> Fun facts (optional)</div>
+        <h1 class="section-title">A few <em>quick</em> ones.</h1>
+        <p class="lede">These go into the "About the Author" page at the back. Fill whichever feel right. Skip the rest.</p>
+
+        <div class="chips">
+          <div class="field">
+            <label class="cap" for="funFavouriteWord">A word you love</label>
+            <input class="input" id="funFavouriteWord" name="funFavouriteWord" type="text" placeholder="lemon">
+          </div>
+          <div class="field">
+            <label class="cap" for="funHobby">Something you do for fun</label>
+            <input class="input" id="funHobby" name="funHobby" type="text" placeholder="drawing">
+          </div>
+          <div class="field">
+            <label class="cap" for="funAdvice">Your advice to other young writers</label>
+            <input class="input" id="funAdvice" name="funAdvice" type="text" placeholder="write the thing that scares you a bit">
+          </div>
+          <div class="field">
+            <label class="cap" for="funFavouriteBook">A book you love</label>
+            <input class="input" id="funFavouriteBook" name="funFavouriteBook" type="text" placeholder="Matilda">
+          </div>
+          <div class="field">
+            <label class="cap" for="funThemeSong">A song that fits your story</label>
+            <input class="input" id="funThemeSong" name="funThemeSong" type="text" placeholder="something by Coldplay">
+          </div>
+          <div class="field">
+            <label class="cap" for="funRandomFact">One random fact about you</label>
+            <input class="input" id="funRandomFact" name="funRandomFact" type="text" placeholder="I can whistle two notes at once">
+          </div>
+        </div>
+      </div>
+      <aside class="marginalia">
+        <span class="tag">Optional</span>
+        <p>The more you fill in, the more your About-the-Author page feels like <em>you</em>. But empty is fine too.</p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- VII. Dedication & acknowledgements (optional) ─────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio vii / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">VII.</span> Dedication &amp; thanks (optional)</div>
+        <h1 class="section-title">Who do you want to <em>thank?</em></h1>
+        <p class="lede">A dedication is a one-liner at the top of your story. Acknowledgements are a few lines at the back. Both optional.</p>
+
+        <div class="field">
+          <label class="cap" for="dedication">Who do you dedicate your story to?</label>
+          <input class="input" id="dedication" name="dedication" type="text" placeholder="For dadi, who told me about the trees">
+        </div>
+        <div class="field">
+          <label class="cap" for="acknowledgements">Anyone you want to thank?</label>
+          <div class="textwrap">
+            <textarea class="textarea" id="acknowledgements" name="acknowledgements" placeholder="Ma, who made me chai every time I got stuck. Sir Vinay, who lent me the dictionary." style="min-height:120px"></textarea>
+          </div>
+        </div>
+      </div>
+      <aside class="marginalia">
+        <span class="tag">Tradition</span>
+        <p>Most published books have these. They're a small public thank-you. <em>You decide what's there.</em></p>
+      </aside>
+    </article>
+  </section>
+
+  <!-- VIII. Editor note + child assent ──────────────────────────────────── -->
+  <section class="sheet">
+    <div class="scene">❋ &nbsp; ❋ &nbsp; ❋</div>
+    <article class="frame">
+      <span class="folio-corner">Folio viii / ix</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">VIII.</span> Last words from you</div>
+        <h1 class="section-title">Anything for <em>the editor?</em></h1>
+        <p class="lede">If there's something a grown-up should know , a sensitive bit, a part you'd rather we not change, a reason the story is short , tell us here. Then your last question: do you want this in the book?</p>
+
+        <div class="field">
+          <label class="cap" for="editorNote">Anything you want the editor to know?</label>
+          <div class="textwrap">
+            <textarea class="textarea" id="editorNote" name="editorNote" placeholder="The part where the dog dies, please don't make it less sad." style="min-height:120px"></textarea>
+          </div>
+        </div>
+
+        <div class="field" data-required>
+          <label class="cap">Do you want your story in the book? <span class="req">required</span></label>
+          <div class="radios" role="radiogroup">
+            <label><input type="radio" name="childAssent" value="Yes" required><span><b>Yes, please put it in the book</b><span class="sub">we'll start the editorial work</span></span></label>
+            <label><input type="radio" name="childAssent" value="No"><span><b>No, I'm not ready yet</b><span class="sub">we'll keep your story and not publish it</span></span></label>
+          </div>
+          <div class="field-error">Pick one, it's your call.</div>
+        </div>
+      </div>
+      <aside class="marginalia">
+        <span class="tag">Your call</span>
+        <p>This is the most important question on the form. <em>Your name, your story, your choice.</em> A grown-up's permission is not the same as yours.</p>
+      </aside>
+    </article>
+  </section>
+
+</form>
+
+<!-- IX. Grown-up consent (register shift) ──────────────────────────────── -->
+<div class="guardian-wrap form-shell-guardian">
+  <div class="sheet">
+    <article class="frame ledger">
+      <span class="folio-corner">Folio ix / ix &nbsp;·&nbsp; Guardian</span>
+      <div>
+        <div class="folio" style="color:var(--blue)">Section &nbsp;<span class="roman" style="color:var(--ink)">IX.</span> For the grown-up</div>
+        <span class="ledger-stamp">Parent &amp; guardian sign-off &nbsp;·&nbsp; required</span>
+        <h1 class="section-title">Now <em>your</em> turn.</h1>
+        <p class="lede" style="color:var(--ink)">
+          This is the bit your child can't fill in for you. Please read each line; tick only what you actually agree to. Bukmuk publishes children's work on public platforms (including Amazon), so the consent has to be specific. You can request withdrawal any time before publication.
+        </p>
+
+        <form id="guardianForm" novalidate>
+          <div class="row2">
+            <div class="field" data-required>
+              <label class="cap" for="guardianName">Your full name <span class="req">required</span></label>
+              <input class="input" id="guardianName" name="guardianName" type="text" required autocomplete="name" placeholder="Priya Sharma">
+              <div class="field-error">Your full name, please.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="guardianRelation">Your relationship to the author <span class="req">required</span></label>
+              <input class="input" id="guardianRelation" name="guardianRelation" type="text" required placeholder="Mother">
+              <div class="field-error">Mother, father, guardian, etc.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="guardianEmail">Email <span class="req">required</span></label>
+              <input class="input" id="guardianEmail" name="guardianEmail" type="email" required autocomplete="email" placeholder="priya@example.in">
+              <div class="field-error">A valid email so we can write back.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="guardianPhone">Phone <span class="req">required</span></label>
+              <input class="input" id="guardianPhone" name="guardianPhone" type="tel" required autocomplete="tel" placeholder="+91 98xxxxxxxx">
+              <div class="field-error">Phone number, please.</div>
+            </div>
+          </div>
+
+          <div class="consent" style="margin-top: 18px">
+            <label>
+              <input type="checkbox" name="consentPublish" required>
+              <span>
+                I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.
+                <span class="req-tag">required</span>
+              </span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentVoice" required>
+              <span>
+                I understand only light edits are made and the child's voice is preserved.
+                <span class="req-tag">required</span>
+              </span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentPhoto">
+              <span>I allow the author's photo to be printed in the book.</span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentLocation">
+              <span>I allow the author's city to be printed in the book.</span>
+            </label>
+          </div>
+
+          <div class="sig-row">
+            <div class="field" data-required>
+              <label class="cap" for="guardianSignature">Type your full name as a signature <span class="req">required</span></label>
+              <input class="input" id="guardianSignature" name="guardianSignature" type="text" required placeholder="Priya Sharma">
+              <div class="field-error">A typed signature matters legally; please type your name.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="consentDate">Date <span class="req">required</span></label>
+              <input class="input" id="consentDate" name="consentDate" type="date" required>
+              <div class="field-error">Today's date.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <span class="save-tag" id="saveTagBottom">Autosaving on this device</span>
+            <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap">
+              <button class="btn" type="button" id="topBtn">↑ Back to top</button>
+              <button class="btn primary" type="submit" id="submitBtn">Send to Bukmuk →</button>
+            </div>
+          </div>
+
+          <div class="field-error" id="submitError" style="margin-top: 14px"></div>
+        </form>
+      </div>
+
+      <aside class="marginalia">
+        <span class="tag">For guardians</span>
+        <p>Light edits means: clear spelling errors, capitalising proper nouns, full stops. <em>We never restructure sentences or replace words.</em></p>
+        <p>If anything we send back changes the meaning of what your child wrote, we ask you both first. Always.</p>
+        <p class="editor-contact">Questions? &nbsp;hello@bukmuk.in</p>
+      </aside>
+    </article>
+  </div>
+</div>
+
+<!-- ─── Thank you screen (hidden until submit succeeds) ─────────────────── -->
+<div class="thankyou" id="thankyou">
+  <section class="sheet">
+    <article class="frame">
+      <span class="folio-corner">Sent</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">∗</span> All done</div>
+        <h1 class="section-title">We have your <em>story</em>.</h1>
+        <p class="lede">An editor will write back within a fortnight. We'll share what we'd like to edit, and we'll always ask before changing anything. Until then, save this reference if you need to write to us about it.</p>
+        <p class="ref">Reference &nbsp;<b id="refCode">—</b></p>
+        <p class="lede" style="margin-top: 36px">If you want to send another story, you can <a href="/" style="color:var(--blue)">start a new form</a>. Each story gets its own.</p>
+      </div>
+      <aside class="marginalia">
+        <span class="tag">What's next</span>
+        <p>Within 14 days: an editor's reply with what we love and what we'd like to gently fix.</p>
+        <p>Within 60 days: an edited proof for you to read, with every change marked.</p>
+        <p>Before print: a final yes from you and your grown-up.</p>
+      </aside>
+    </article>
+  </section>
+</div>
+
+<!-- ─── Colophon ───────────────────────────────────────────────────────── -->
+<footer class="colophon">
+  <div class="row">
+    <span>Bukmuk &nbsp;·&nbsp; Authors' Intake &nbsp;·&nbsp; Vol. XI</span>
+    <span>Set in Fraunces &amp; Geist Mono &nbsp;·&nbsp; <a href="https://bukmuk.com">bukmuk.com</a></span>
+    <span>© Bukmuk Library 2026 &nbsp;·&nbsp; <a href="https://bukmukpublishing.com">bukmukpublishing.com</a></span>
+  </div>
+</footer>
+
+<script src="/intake.js" defer></script>
+</body>
+</html>
