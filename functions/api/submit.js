@@ -183,6 +183,7 @@ import { sendSesEmail } from '../_lib/aws-ses.js';
 
 function peek(payload){
   const fields = (payload && payload.data && payload.data.fields) || [];
+  const files  = (payload && payload._meta && payload._meta.files) || {};
   const get = key => {
     const f = fields.find(x => x.key === key);
     return f ? String(f.value || '').trim() : '';
@@ -190,15 +191,38 @@ function peek(payload){
   return {
     authorName:   get('authorName'),
     authorAge:    get('authorAge'),
+    authorLocation: get('authorLocation'),
     storyTitle:   get('storyTitle'),
     story:        get('story'),
+    inspiration:  get('inspiration'),
+    dedication:   get('dedication'),
+    acknowledgements: get('acknowledgements'),
+    languageNote: get('languageNote'),
+    editorNote:   get('editorNote'),
+    hasChapters:  get('hasChapters'),
+    creditAs:     get('creditAs'),
+    penName:      get('penName'),
     book:         get('book'),
     channel:      get('channel'),
     cohort:       get('cohort'),
-    guardianEmail: get('guardianEmail'),
-    guardianName:  get('guardianName'),
+    // Guardian + consent block , the legal record the editor needs to see.
+    guardianName:      get('guardianName'),
+    guardianRelation:  get('guardianRelation'),
+    guardianEmail:     get('guardianEmail'),
+    guardianPhone:     get('guardianPhone'),
+    guardianSignature: get('guardianSignature'),
+    consentDate:       get('consentDate'),
+    consentPublish:    get('consentPublish'),
+    consentPhoto:      get('consentPhoto'),
+    consentLocation:   get('consentLocation'),
+    childAssent:       get('childAssent'),
+    hasPhoto:   !!files.authorPhoto,
+    hasArtwork: !!files.authorArtwork,
   };
 }
+
+// Consent ticks export as the long label text; render a clean Yes/No.
+function yesNo(v){ return isChecked(v) ? 'Yes' : 'No'; }
 
 function wordCountStr(s){
   return String(s || '').trim().split(/\s+/).filter(Boolean).length;
@@ -223,6 +247,28 @@ async function sendEditorNotification(env, p, meta){
     p.cohort  ? `Cohort:       ${p.cohort}`  : null,
     `Reference:    ${meta.reference}`,
     `Received:     ${meta.receivedAt}`,
+    ``,
+    `, Parent / guardian consent ,`,
+    `Guardian:     ${p.guardianName || '(none)'}${p.guardianRelation ? ` (${p.guardianRelation})` : ''}`,
+    `Email:        ${p.guardianEmail || '(none)'}`,
+    `Phone:        ${p.guardianPhone || '(none)'}`,
+    `Signed:       ${p.guardianSignature || '(none)'}${p.consentDate ? ` on ${p.consentDate}` : ''}`,
+    `Publish:      ${yesNo(p.consentPublish)}`,
+    `Print photo:  ${yesNo(p.consentPhoto)}`,
+    `Print city:   ${yesNo(p.consentLocation)}`,
+    `Child assent: ${p.childAssent || '(none)'}`,
+    `Credit as:    ${p.creditAs || '(none)'}${p.penName ? ` , pen name: ${p.penName}` : ''}`,
+    ``,
+    `, Author details ,`,
+    `Location:     ${p.authorLocation || '(none)'}`,
+    `Has chapters: ${p.hasChapters || '(none)'}`,
+    `Inspiration:  ${p.inspiration || '(none)'}`,
+    `Dedication:   ${p.dedication || '(none)'}`,
+    `Thanks:       ${p.acknowledgements || '(none)'}`,
+    `Language note (words to keep): ${p.languageNote || '(none)'}`,
+    `Editor note:  ${p.editorNote || '(none)'}`,
+    `Photo:        ${p.hasPhoto ? 'attached' : 'none'}`,
+    `Artwork:      ${p.hasArtwork ? 'attached' : 'none'}`,
     ``,
     `Open the editor's inbox to review and import:`,
     `  http://127.0.0.1:8084/#/intake`,
@@ -256,6 +302,13 @@ async function sendParentConfirmation(env, p, meta){
     `Thank you for sending us ${child}'s story, "${p.storyTitle || '(untitled)'}". We have it safely.`,
     ``,
     `Your reference is ${meta.reference}. Keep it in case you ever need to write to us about this submission.`,
+    ``,
+    `A copy of what you confirmed, for your records:`,
+    `  ,  Publish ${child}'s story in a Bukmuk book (which may be sold on public platforms including Amazon): ${yesNo(p.consentPublish)}`,
+    `  ,  Print the author's photo: ${yesNo(p.consentPhoto)}`,
+    `  ,  Print the author's city${p.authorLocation ? ` (${p.authorLocation})` : ''}: ${yesNo(p.consentLocation)}`,
+    `  ,  ${child} wants the story in the book: ${p.childAssent || '(not answered)'}`,
+    `  ,  Signed by ${p.guardianSignature || p.guardianName || 'you'}${p.consentDate ? ` on ${p.consentDate}` : ''}.`,
     ``,
     `What happens next:`,
     `  ,  Within a fortnight, a real editor will read the story and write back to you and ${child}. We'll share what we'd like to gently edit and ask before changing anything that matters.`,
