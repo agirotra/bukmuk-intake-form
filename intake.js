@@ -631,6 +631,17 @@
       log('fetch resolved, status=', res.status);
       if (!res.ok){
         const t = await res.text().catch(() => '');
+        // Workshop-code gate (403): show a clear, friendly reason instead of the
+        // generic network error, and send them back to the code field.
+        if (res.status === 403){
+          let reason = '';
+          try { reason = (JSON.parse(t).reason) || ''; } catch {}
+          const e = new Error(reason === 'missing'
+            ? 'Please enter the workshop code your facilitator gave you.'
+            : "That workshop code isn't valid. Please check the code your facilitator gave you (or the link they sent).");
+          e.userFacing = true;
+          throw e;
+        }
         throw new Error(t || `submission failed (${res.status})`);
       }
       const json = await res.json().catch(() => ({}));
@@ -660,6 +671,19 @@
       log('submit failed:', err && err.message);
       submitBtn.removeAttribute('aria-busy');
       submitBtn.textContent = 'Send to Bukmuk →';
+      // A clear, user-facing reason (e.g. wrong workshop code) , show it as-is
+      // and take them back to the code field so they can fix it.
+      if (err && err.userFacing){
+        submitError.textContent = err.message;
+        submitError.style.color = 'var(--err)';
+        const codeEl = form.elements['workshopCode'];
+        if (codeEl){
+          const f = codeEl.closest('.field'); if (f) f.classList.add('error');
+          try { codeEl.focus(); codeEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch {}
+        }
+        setSaveTag('error', 'Check your workshop code');
+        return;
+      }
       const isTimeout = err && err.name === 'AbortError';
       submitError.textContent = isTimeout
         ? "Submission is taking longer than usual. Your story is still saved in this browser. Please check your internet and try again, or email helpdesk@bukmuk.com."
