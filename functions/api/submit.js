@@ -159,15 +159,47 @@ function fieldValue(payload, key){
   const f = (payload && payload.data && payload.data.fields || []).find(x => x.key === key);
   return f ? String(f.value || '').trim() : '';
 }
-function checkWorkshopCode(payload, env){
-  const codes = new Set(
-    String(env.WORKSHOP_CODES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+function normCode(raw){
+  return String(raw == null ? '' : raw).trim().toLowerCase()
+    .replace(/\s+/g, '-').replace(/[^a-z0-9._-]+/g, '').replace(/^[-_.]+|[-_.]+$/g, '');
+}
+// Valid codes come from two places, merged: a static WORKSHOP_CODES env list
+// (fallback) and the editor-managed Cloudflare KV store (WORKSHOP_CODES_KV
+// binding, key `workshop-codes`). KV entries are honoured only when active and
+// not expired. Returns { set, cohortOf } where cohortOf maps code -> cohort.
+async function loadValidCodes(env){
+  const set = new Set(
+    String(env.WORKSHOP_CODES || '').split(',').map(s => normCode(s)).filter(Boolean)
   );
-  if (codes.size === 0) return { ok: true, code: null };   // gate disabled until configured
-  const entered = (fieldValue(payload, 'workshopCode') || fieldValue(payload, 'code')).toLowerCase();
+  const cohortOf = {};
+  if (env.WORKSHOP_CODES_KV){
+    try {
+      const raw = await env.WORKSHOP_CODES_KV.get('workshop-codes');
+      if (raw){
+        const list = JSON.parse(raw);
+        const now = Date.now();
+        for (const c of (Array.isArray(list) ? list : [])){
+          const code = normCode(c.code);
+          const active = c.active !== false;
+          const exp = c.expiresAt ? Date.parse(c.expiresAt) : NaN;
+          const expired = Number.isFinite(exp) && exp < now;
+          if (code && active && !expired){ set.add(code); if (c.cohort) cohortOf[code] = c.cohort; }
+        }
+      }
+    } catch (_) { /* KV unreadable , fall back to env list */ }
+  }
+  return { set, cohortOf };
+}
+// Gate is OFF only when truly unconfigured (no env list AND no KV binding), so
+// the form keeps working before codes are set up. Once either is present it's ON.
+async function checkWorkshopCode(payload, env){
+  const configured = !!(String(env.WORKSHOP_CODES || '').trim() || env.WORKSHOP_CODES_KV);
+  if (!configured) return { ok: true, code: null, cohort: null };
+  const { set, cohortOf } = await loadValidCodes(env);
+  const entered = normCode(fieldValue(payload, 'workshopCode') || fieldValue(payload, 'code'));
   if (!entered) return { ok: false, reason: 'missing' };
-  if (!codes.has(entered)) return { ok: false, reason: 'invalid' };
-  return { ok: true, code: entered };
+  if (!set.has(entered)) return { ok: false, reason: 'invalid' };
+  return { ok: true, code: entered, cohort: cohortOf[entered] || null };
 }
 
 // UUID (v4) without crypto.randomUUID dependency
@@ -415,10 +447,15 @@ export async function onRequestPost({ request, env, waitUntil }){
   payload = sanitisePayload(payload);
 
   // 3b) Workshop access gate , block anyone without a valid workshop code
-  // (random / non-workshop submissions). Open until WORKSHOP_CODES is set.
-  const gate = checkWorkshopCode(payload, env);
+  // (random / non-workshop submissions). Open until codes are configured.
+  const gate = await checkWorkshopCode(payload, env);
   if (!gate.ok){
     return json({ error: 'workshop code required', reason: gate.reason }, 403);
+  }
+  // Auto-tag the cohort from the matched code (if the code carries one and the
+  // submission didn't already specify a cohort), so editor inbox grouping works.
+  if (gate.cohort && !fieldValue(payload, 'cohort')){
+    payload.data.fields.push({ label: 'cohort', key: 'cohort', value: String(gate.cohort) });
   }
 
   // 4) Validate on the server side too
