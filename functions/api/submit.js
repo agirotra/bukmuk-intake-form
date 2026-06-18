@@ -163,43 +163,32 @@ function normCode(raw){
   return String(raw == null ? '' : raw).trim().toLowerCase()
     .replace(/\s+/g, '-').replace(/[^a-z0-9._-]+/g, '').replace(/^[-_.]+|[-_.]+$/g, '');
 }
-// Valid codes come from two places, merged: a static WORKSHOP_CODES env list
-// (fallback) and the editor-managed Cloudflare KV store (WORKSHOP_CODES_KV
-// binding, key `workshop-codes`). KV entries are honoured only when active and
-// not expired. Returns { set, cohortOf } where cohortOf maps code -> cohort.
-async function loadValidCodes(env){
-  const set = new Set(
-    String(env.WORKSHOP_CODES || '').split(',').map(s => normCode(s)).filter(Boolean)
-  );
-  const cohortOf = {};
-  if (env.WORKSHOP_CODES_KV){
-    try {
-      const raw = await env.WORKSHOP_CODES_KV.get('workshop-codes');
-      if (raw){
-        const list = JSON.parse(raw);
-        const now = Date.now();
-        for (const c of (Array.isArray(list) ? list : [])){
-          const code = normCode(c.code);
-          const active = c.active !== false;
-          const exp = c.expiresAt ? Date.parse(c.expiresAt) : NaN;
-          const expired = Number.isFinite(exp) && exp < now;
-          if (code && active && !expired){ set.add(code); if (c.cohort) cohortOf[code] = c.cohort; }
-        }
-      }
-    } catch (_) { /* KV unreadable , fall back to env list */ }
-  }
-  return { set, cohortOf };
-}
-// Gate is OFF only when truly unconfigured (no env list AND no KV binding), so
-// the form keeps working before codes are set up. Once either is present it's ON.
+// Valid codes come from two places: a static WORKSHOP_CODES env list (fallback)
+// and the editor-managed Cloudflare KV store, where each code is its OWN key
+// `wc:<code>` (the editor uses per-key writes so codes never clobber each other
+// under KV's eventual consistency). We look up just the ONE entered code , a
+// single KV get , and honour it only when active and not expired.
+// Gate is OFF only when truly unconfigured (no env list AND no KV binding).
 async function checkWorkshopCode(payload, env){
-  const configured = !!(String(env.WORKSHOP_CODES || '').trim() || env.WORKSHOP_CODES_KV);
+  const envSet = new Set(String(env.WORKSHOP_CODES || '').split(',').map(s => normCode(s)).filter(Boolean));
+  const configured = !!(envSet.size || env.WORKSHOP_CODES_KV);
   if (!configured) return { ok: true, code: null, cohort: null };
-  const { set, cohortOf } = await loadValidCodes(env);
   const entered = normCode(fieldValue(payload, 'workshopCode') || fieldValue(payload, 'code'));
   if (!entered) return { ok: false, reason: 'missing' };
-  if (!set.has(entered)) return { ok: false, reason: 'invalid' };
-  return { ok: true, code: entered, cohort: cohortOf[entered] || null };
+  if (envSet.has(entered)) return { ok: true, code: entered, cohort: null };
+  if (env.WORKSHOP_CODES_KV){
+    try {
+      const raw = await env.WORKSHOP_CODES_KV.get('wc:' + entered);
+      if (raw){
+        const c = JSON.parse(raw);
+        const active = c.active !== false;
+        const exp = c.expiresAt ? Date.parse(c.expiresAt) : NaN;
+        const expired = Number.isFinite(exp) && exp < Date.now();
+        if (active && !expired) return { ok: true, code: entered, cohort: c.cohort || null };
+      }
+    } catch (_) { /* KV unreadable , fall through to invalid */ }
+  }
+  return { ok: false, reason: 'invalid' };
 }
 
 // UUID (v4) without crypto.randomUUID dependency
