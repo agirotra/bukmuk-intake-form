@@ -145,6 +145,31 @@ function validateOnServer(payload){
   return { ok: errors.length === 0, errors };
 }
 
+// ─── Workshop access gate ──────────────────────────────────────────────────
+// Only people from a real Bukmuk workshop should be able to submit (random
+// kids' submissions are unconsented minor PII we must not collect). Each
+// workshop has a short memorable code the facilitator shares; the form carries
+// it (typed, or pre-filled from a ?code= link). We validate it against the
+// WORKSHOP_CODES env var (comma-separated allowlist, case-insensitive).
+//
+// If WORKSHOP_CODES is unset, the gate is OPEN (so the form keeps working
+// before codes are configured). To turn the gate ON, set WORKSHOP_CODES in the
+// Pages project env. Adding a workshop = append its code to that list.
+function fieldValue(payload, key){
+  const f = (payload && payload.data && payload.data.fields || []).find(x => x.key === key);
+  return f ? String(f.value || '').trim() : '';
+}
+function checkWorkshopCode(payload, env){
+  const codes = new Set(
+    String(env.WORKSHOP_CODES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean)
+  );
+  if (codes.size === 0) return { ok: true, code: null };   // gate disabled until configured
+  const entered = (fieldValue(payload, 'workshopCode') || fieldValue(payload, 'code')).toLowerCase();
+  if (!entered) return { ok: false, reason: 'missing' };
+  if (!codes.has(entered)) return { ok: false, reason: 'invalid' };
+  return { ok: true, code: entered };
+}
+
 // UUID (v4) without crypto.randomUUID dependency
 function uuid(){
   if (crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -205,6 +230,7 @@ function peek(payload){
     book:         get('book'),
     channel:      get('channel'),
     cohort:       get('cohort'),
+    workshopCode: get('workshopCode') || get('code'),
     // Guardian + consent block , the legal record the editor needs to see.
     guardianName:      get('guardianName'),
     guardianRelation:  get('guardianRelation'),
@@ -245,6 +271,7 @@ async function sendEditorNotification(env, p, meta){
     `Target book:  ${p.book || '(not specified)'}`,
     p.channel ? `Channel:      ${p.channel}` : null,
     p.cohort  ? `Cohort:       ${p.cohort}`  : null,
+    p.workshopCode ? `Workshop code: ${p.workshopCode}` : null,
     `Reference:    ${meta.reference}`,
     `Received:     ${meta.receivedAt}`,
     ``,
@@ -386,6 +413,13 @@ export async function onRequestPost({ request, env, waitUntil }){
 
   // 3) Em-dash sanitise (so the importer never sees one)
   payload = sanitisePayload(payload);
+
+  // 3b) Workshop access gate , block anyone without a valid workshop code
+  // (random / non-workshop submissions). Open until WORKSHOP_CODES is set.
+  const gate = checkWorkshopCode(payload, env);
+  if (!gate.ok){
+    return json({ error: 'workshop code required', reason: gate.reason }, 403);
+  }
 
   // 4) Validate on the server side too
   const v = validateOnServer(payload);

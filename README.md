@@ -149,6 +149,26 @@ Settings → Environment variables** (Production, mark secrets as Encrypted):
 | `SES_FROM_ADDRESS` | `editor@bukmuk.com` | Any address on a domain verified in SES. |
 | `NOTIFY_TO` | `abhinav.girotra@gmail.com` | Optional. Defaults to the address above. |
 | `SES_REPLY_TO` | `abhinav.girotra@gmail.com` | Optional. `Reply-To` header on both emails so parent replies don't bounce. Defaults to `NOTIFY_TO`. |
+| `WORKSHOP_CODES` | `dps-delhi-nov26,sunrise-camp` | **Workshop access gate.** Comma-separated allowlist of valid workshop codes. Only submissions carrying one of these are accepted (others get 403). **Unset = gate OFF** (form open to anyone). Case-insensitive. |
+
+### Workshop access gate (stop random submissions)
+
+Only people from a real Bukmuk workshop should be able to submit. Each workshop
+gets a short, memorable **code** the facilitator shares; the form requires it
+and the Function validates it against `WORKSHOP_CODES`.
+
+- **Creating a code:** you don't generate anything , just pick a memorable label
+  per workshop (convention: `<partner>-<city>-<mon><yy>`, e.g. `dps-delhi-nov26`)
+  and append it to `WORKSHOP_CODES`. To retire a workshop, remove its code.
+- **Sharing it with parents (two easy ways):**
+  1. Give them the plain code , they type it in the "Workshop code" field.
+  2. Or share a pre-filled link , `https://<form-url>/?code=dps-delhi-nov26` ,
+     the field auto-fills, the parent just clicks through. (`?code=` also accepts
+     `?workshopCode=`.)
+- The code is stored on the submission and shown in the editor notification +
+  inbox, so you can see which workshop each story came from.
+- Cleanup for anything that slipped through (or pre-gate randoms): use
+  `node scripts/triage-submissions.js` in the **bukmuk-editor** repo.
 
 ### Minimal IAM policy for the dedicated user
 

@@ -133,6 +133,15 @@
     facilitator: params.get('facilitator') || '',
   };
 
+  // Workshop access code , pre-fill the visible field from a ?code= link so a
+  // parent who clicks the facilitator's link never has to type it. They can
+  // also type it by hand. Validated server-side against WORKSHOP_CODES.
+  const codeParam = params.get('code') || params.get('workshopCode') || '';
+  if (codeParam) {
+    const codeEl = form.elements['workshopCode'];
+    if (codeEl) codeEl.value = codeParam;
+  }
+
   // ─── Autosave (text only, never file blobs) ────────────────────────────
   function snapshot(){
     const data = {};
@@ -426,6 +435,15 @@
       else ok(fieldEl);
     }
 
+    // Workshop access code (gate token; not an import field, validated here for
+    // a clean inline error and again on the server against WORKSHOP_CODES).
+    {
+      const el = form.elements['workshopCode'];
+      const fieldEl = el && el.closest('.field');
+      if (el && !el.value.trim()) flag(fieldEl, 'workshop code required');
+      else if (fieldEl) ok(fieldEl);
+    }
+
     // Age
     const ageEl = $$('input[name=authorAge]:checked')[0];
     const ageField = $('[data-required] .agewheel') && $('[data-required] .agewheel').closest('.field');
@@ -546,6 +564,13 @@
 
     // hidden fields (book, channel, cohort, facilitator)
     for (const [k, v] of Object.entries(hidden)) if (v) add(k, v);
+
+    // workshop access code (gate token; not a mapped import field, so push it
+    // directly with a literal label rather than via LABELS).
+    const codeEl = form.elements['workshopCode'];
+    if (codeEl && codeEl.value) {
+      fields.push({ label: 'Workshop code', key: 'workshopCode', value: sanitiseEmDashes(String(codeEl.value).trim()) });
+    }
 
     return { data: { fields }, _client: { submittedAt: new Date().toISOString() } };
   }
