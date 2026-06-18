@@ -227,6 +227,10 @@ h1.section-title em{
   margin-top: 6px;
 }
 .field.error .field-error{ display: block }
+/* The standalone submit-level message (#submitError) isn't inside a .field.error,
+   so the base `display:none` hid it , messages were set but never shown. Show it
+   whenever it actually has text. */
+#submitError:not(:empty){ display: block }
 
 .input, .textarea, select.input{
   width: 100%;
