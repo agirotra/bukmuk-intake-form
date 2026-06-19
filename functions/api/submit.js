@@ -319,7 +319,7 @@ async function sendEditorNotification(env, p, meta){
     `Artwork:      ${p.hasArtwork ? 'attached' : 'none'}`,
     ``,
     `Open the editor's inbox to review and import:`,
-    `  http://127.0.0.1:8084/#/intake`,
+    `  ${(env.EDITOR_URL || 'https://editor.bukmuk.com').replace(/\/+$/, '')}/#/intake`,
     ``,
     `R2 object key (for manual pull if needed):`,
     `  bukmuk-intake-submissions/${meta.id}.json`,
