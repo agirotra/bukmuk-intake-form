@@ -620,15 +620,52 @@
 
     try {
       log('build payload');
-      const payload = buildPayload();
-      const body = new FormData();
-      body.append('payload', JSON.stringify(payload));
-      if (fileBlobs.authorPhoto)   body.append('authorPhoto',   fileBlobs.authorPhoto);
-      if (fileBlobs.authorArtwork) body.append('authorArtwork', fileBlobs.authorArtwork);
-      log('fetch start, fields=', payload.data.fields.length, 'photo=', !!fileBlobs.authorPhoto, 'drawing=', !!fileBlobs.authorArtwork);
+      // Rebuild the body per attempt , parents submit from phones on flaky
+      // mobile links, so a dropped connection or a brief edge 5xx is common.
+      // Retrying a few times with backoff (all INSIDE the 45s budget) swallows
+      // those blips silently instead of showing the scary "couldn't send"
+      // message for what is almost always transient. We retry ONLY network
+      // errors and 5xx , never a success, a 403 (bad workshop code) or a 4xx
+      // (validation), and never after the 45s abort fires.
+      const buildBody = () => {
+        const payload = buildPayload();
+        const b = new FormData();
+        b.append('payload', JSON.stringify(payload));
+        if (fileBlobs.authorPhoto)   b.append('authorPhoto',   fileBlobs.authorPhoto);
+        if (fileBlobs.authorArtwork) b.append('authorArtwork', fileBlobs.authorArtwork);
+        return { b, fields: payload.data.fields.length };
+      };
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      const MAX_ATTEMPTS = 3;
 
-      const res = await fetch('/api/submit', { method: 'POST', body, signal: controller.signal });
-      log('fetch resolved, status=', res.status);
+      let res;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++){
+        const { b, fields } = buildBody();
+        log('fetch start, attempt', attempt + '/' + MAX_ATTEMPTS, 'fields=', fields, 'photo=', !!fileBlobs.authorPhoto, 'drawing=', !!fileBlobs.authorArtwork);
+        try {
+          res = await fetch('/api/submit', { method: 'POST', body: b, signal: controller.signal });
+        } catch (netErr){
+          // The 45s budget elapsed , don't retry; surface as the timeout case.
+          if (netErr && netErr.name === 'AbortError') throw netErr;
+          // Network-level failure (dropped connection). Retry if we have budget.
+          log('network error on attempt', attempt, netErr && netErr.message);
+          if (attempt < MAX_ATTEMPTS && !controller.signal.aborted){
+            await sleep(700 * attempt);
+            if (controller.signal.aborted) throw netErr;
+            continue;
+          }
+          throw netErr;
+        }
+        log('fetch resolved, attempt', attempt, 'status=', res.status);
+        // 5xx = transient server/edge; retry. 2xx and 4xx (incl. 403) break out
+        // and are handled below as the final outcome.
+        if (res.status >= 500 && attempt < MAX_ATTEMPTS && !controller.signal.aborted){
+          await sleep(700 * attempt);
+          if (controller.signal.aborted) break;
+          continue;
+        }
+        break;
+      }
       if (!res.ok){
         const t = await res.text().catch(() => '');
         // Workshop-code gate (403): show a clear, friendly reason instead of the
