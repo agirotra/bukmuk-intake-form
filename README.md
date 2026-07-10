@@ -220,7 +220,10 @@ of writing to R2 , useful for end-to-end manual testing.
 ## Getting submissions back into the editor
 
 Submissions land in R2 as `<uuid>.json` (Tally-compatible shape) plus
-optional `<uuid>/authorPhoto.<ext>` and `<uuid>/authorArtwork.<ext>`.
+an optional `<uuid>/authorPhoto.<ext>` and zero or more drawings
+`<uuid>/authorArtwork.<ext>`, `<uuid>/authorArtwork-2.<ext>`, … (a child may
+upload up to 8). In the JSON payload the `authorArtwork` field is an array of
+`{url,name}`; the editor's importer (`extractFiles`) pulls every one.
 
 ### Manual download (from the editor repo)
 

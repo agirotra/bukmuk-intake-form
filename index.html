@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260618-1">
+<link rel="stylesheet" href="/styles.css?v=20260710-multiart">
 </head>
 <body>
 
@@ -189,26 +189,27 @@
         </div>
 
         <div class="field">
-          <label class="cap">Any drawing of your own you'd like us to see</label>
+          <label class="cap">Any drawings of your own you'd like us to see</label>
           <label class="drop" for="authorArtwork" id="authorArtworkDrop">
             <div class="icon" data-icon="✎">✎</div>
             <div class="copy" data-copy>
-              <b>Drop a drawing or tap to choose</b>
-              <span class="meta">JPG / PNG / WEBP &nbsp;·&nbsp; Up to 15 MB &nbsp;·&nbsp; Pen, pencil, paint, anything</span>
+              <b>Drop drawings or tap to choose</b>
+              <span class="meta">JPG / PNG / WEBP &nbsp;·&nbsp; Up to 15 MB each &nbsp;·&nbsp; Add up to 8 &nbsp;·&nbsp; Pen, pencil, paint, anything</span>
             </div>
-            <input type="file" id="authorArtwork" name="authorArtwork" accept="image/jpeg,image/png,image/webp">
+            <input type="file" id="authorArtwork" name="authorArtwork" accept="image/jpeg,image/png,image/webp" multiple>
           </label>
+          <ul class="filelist" id="authorArtworkList" hidden></ul>
         </div>
 
         <div class="field">
-          <label class="cap" for="artworkCaption">What is the drawing of?</label>
+          <label class="cap" for="artworkCaption">What are your drawings of?</label>
           <input class="input" id="artworkCaption" name="artworkCaption" type="text" placeholder="The peepal trees behind my house">
         </div>
       </div>
 
       <aside class="marginalia">
         <span class="tag">No pressure</span>
-        <p>You don't need a photo for your story to be in the book. A drawing isn't required either, <em>but if you have one</em> we love showing them.</p>
+        <p>You don't need a photo for your story to be in the book. Drawings aren't required either, <em>but if you have some</em> we love showing them. Share as many as you like, up to eight.</p>
       </aside>
     </article>
   </section>
@@ -609,6 +610,6 @@
   </div>
 </footer>
 
-<script src="/intake.js?v=20260625-1" defer></script>
+<script src="/intake.js?v=20260710-multiart" defer></script>
 </body>
 </html>

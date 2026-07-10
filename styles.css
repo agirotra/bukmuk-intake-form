@@ -388,6 +388,40 @@ h1.section-title em{
 }
 .drop .remove:hover{ background: var(--err); color: var(--paper) }
 
+/* Multi-file picked list (author drawings). Rows sit BELOW the dropzone,
+   outside the <label>, so a Remove click never re-opens the file picker. */
+.filelist{ list-style:none; margin: 12px 0 0; padding: 0; display:flex; flex-direction:column; gap: 8px }
+.filelist[hidden]{ display:none }
+.filelist li{
+  display:flex; align-items:center; gap: 12px;
+  border: 1.5px solid var(--rule); background: #fffdf6;
+  padding: 10px 12px;
+}
+.filelist li .thumb{
+  width: 40px; height: 40px; flex-shrink: 0;
+  object-fit: cover; border: 1px solid var(--ink);
+  background: var(--paper);
+}
+.filelist li .fname{
+  flex: 1 1 auto; min-width: 0;
+  font-family: var(--display); font-variation-settings:"opsz" 14,"wght" 500;
+  font-size: 14px; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.filelist li .fname .fsize{
+  display:block;
+  font-family: var(--mono); font-size: 10px; letter-spacing:.14em;
+  color: var(--ink-soft); text-transform: uppercase; margin-top: 2px;
+}
+.filelist li .remove{
+  flex-shrink: 0;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--err);
+  background: transparent; border: 1px solid var(--err);
+  padding: 6px 10px; cursor: pointer;
+}
+.filelist li .remove:hover{ background: var(--err); color: var(--paper) }
+
 /* fun-facts chips */
 .chips{
   display:grid; grid-template-columns: repeat(2, 1fr); gap: 18px 24px;

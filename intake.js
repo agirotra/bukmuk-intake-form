@@ -118,7 +118,12 @@
   const guardianForm = $('#guardianForm');
   if (!form || !guardianForm) return;
 
-  const fileBlobs = { authorPhoto: null, authorArtwork: null };
+  // authorPhoto is a single File (one back-of-book portrait); authorArtwork is
+  // an array , a child may share several drawings / illustrations for one story.
+  const fileBlobs = { authorPhoto: null, authorArtwork: [] };
+  const MAX_ARTWORK = 8;
+  const MAX_FILE_BYTES = 15 * 1024 * 1024;
+  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   let saveTimer = null;
   let submitted = false;
 
@@ -325,7 +330,7 @@
     inputEl.addEventListener('change', () => {
       const f = inputEl.files && inputEl.files[0];
       if (!f) return reset();
-      if (f.size > 15 * 1024 * 1024){
+      if (f.size > MAX_FILE_BYTES){
         alert('Photo is over 15 MB. Please pick a smaller image.');
         return reset();
       }
@@ -337,8 +342,93 @@
     ['dragleave','drop'].forEach(evt =>
       dropEl.addEventListener(evt, e => { dropEl.classList.remove('drag-over'); }));
   }
-  attachDropzone($('#authorPhotoDrop'),   $('#authorPhoto'),   'authorPhoto');
-  attachDropzone($('#authorArtworkDrop'), $('#authorArtwork'), 'authorArtwork');
+
+  // Multi-file dropzone: accumulates several drawings into fileBlobs[slot]
+  // (an array), rendering a removable row per file. Selecting / dropping more
+  // files ADDS to the set (native inputs replace, so we merge + reset the input
+  // after each change). Enforces per-file size, type whitelist, and a max count.
+  function attachMultiDropzone(dropEl, inputEl, listEl, slot){
+    const copy = $('[data-copy]', dropEl);
+    const original = copy ? copy.innerHTML : '';
+    const objectUrls = new Map(); // File -> object URL, so we can revoke on remove
+
+    function sameFile(a, b){
+      return a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+    }
+
+    function render(){
+      const files = fileBlobs[slot];
+      // Summary line on the dropzone itself.
+      if (files.length){
+        dropEl.classList.add('has-file');
+        const n = files.length;
+        copy.innerHTML =
+          `<b>${n} drawing${n > 1 ? 's' : ''} added</b>` +
+          `<span class="meta">${n < MAX_ARTWORK ? 'Tap to add more' : 'Maximum reached'} &nbsp;·&nbsp; JPG / PNG / WEBP, up to 15 MB each</span>`;
+      } else {
+        dropEl.classList.remove('has-file');
+        if (copy) copy.innerHTML = original;
+      }
+      // The removable rows.
+      listEl.innerHTML = '';
+      listEl.hidden = files.length === 0;
+      files.forEach((f, i) => {
+        const li = document.createElement('li');
+        let url = objectUrls.get(f);
+        if (!url){ url = URL.createObjectURL(f); objectUrls.set(f, url); }
+        const kb = Math.round(f.size / 1024);
+        const size = kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb + ' KB';
+        const img = document.createElement('img');
+        img.className = 'thumb'; img.src = url; img.alt = '';
+        const name = document.createElement('div');
+        name.className = 'fname';
+        name.innerHTML = `${escapeHtml(f.name)}<span class="fsize">${size}</span>`;
+        const btn = document.createElement('button');
+        btn.type = 'button'; btn.className = 'remove'; btn.textContent = 'Remove';
+        btn.addEventListener('click', (e) => { e.preventDefault(); removeAt(i); });
+        li.appendChild(img); li.appendChild(name); li.appendChild(btn);
+        listEl.appendChild(li);
+      });
+    }
+
+    function removeAt(i){
+      const f = fileBlobs[slot][i];
+      if (f && objectUrls.has(f)){ URL.revokeObjectURL(objectUrls.get(f)); objectUrls.delete(f); }
+      fileBlobs[slot].splice(i, 1);
+      render();
+    }
+
+    function addFiles(fileList){
+      const incoming = Array.from(fileList || []);
+      let rejectedType = 0, rejectedSize = 0, overflow = 0;
+      for (const f of incoming){
+        if (f.type && ALLOWED_IMAGE_TYPES.indexOf(f.type) === -1){ rejectedType++; continue; }
+        if (f.size > MAX_FILE_BYTES){ rejectedSize++; continue; }
+        if (fileBlobs[slot].some(g => sameFile(g, f))) continue; // dedup
+        if (fileBlobs[slot].length >= MAX_ARTWORK){ overflow++; continue; }
+        fileBlobs[slot].push(f);
+      }
+      render();
+      const msgs = [];
+      if (rejectedType) msgs.push(`${rejectedType} skipped (only JPG, PNG, or WEBP)`);
+      if (rejectedSize) msgs.push(`${rejectedSize} skipped (over 15 MB)`);
+      if (overflow)     msgs.push(`${overflow} skipped (up to ${MAX_ARTWORK} drawings)`);
+      if (msgs.length) alert(msgs.join('\n'));
+    }
+
+    inputEl.addEventListener('change', () => {
+      addFiles(inputEl.files);
+      inputEl.value = ''; // let the same file be re-picked, and keep native drop additive
+    });
+    // drag visuals (the native drop lands on the overlaid file input → change)
+    ['dragenter','dragover'].forEach(evt =>
+      dropEl.addEventListener(evt, e => { e.preventDefault(); dropEl.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(evt =>
+      dropEl.addEventListener(evt, () => { dropEl.classList.remove('drag-over'); }));
+  }
+
+  attachDropzone($('#authorPhotoDrop'), $('#authorPhoto'), 'authorPhoto');
+  attachMultiDropzone($('#authorArtworkDrop'), $('#authorArtwork'), $('#authorArtworkList'), 'authorArtwork');
 
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c => (
@@ -631,8 +721,11 @@
         const payload = buildPayload();
         const b = new FormData();
         b.append('payload', JSON.stringify(payload));
-        if (fileBlobs.authorPhoto)   b.append('authorPhoto',   fileBlobs.authorPhoto);
-        if (fileBlobs.authorArtwork) b.append('authorArtwork', fileBlobs.authorArtwork);
+        if (fileBlobs.authorPhoto) b.append('authorPhoto', fileBlobs.authorPhoto);
+        // Every drawing goes under the SAME field name; the server reads them
+        // with form.getAll('authorArtwork'). Filenames are preserved so the
+        // editor keeps provenance.
+        for (const art of fileBlobs.authorArtwork) b.append('authorArtwork', art, art.name);
         return { b, fields: payload.data.fields.length };
       };
       const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -641,7 +734,7 @@
       let res;
       for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++){
         const { b, fields } = buildBody();
-        log('fetch start, attempt', attempt + '/' + MAX_ATTEMPTS, 'fields=', fields, 'photo=', !!fileBlobs.authorPhoto, 'drawing=', !!fileBlobs.authorArtwork);
+        log('fetch start, attempt', attempt + '/' + MAX_ATTEMPTS, 'fields=', fields, 'photo=', !!fileBlobs.authorPhoto, 'drawings=', fileBlobs.authorArtwork.length);
         try {
           res = await fetch('/api/submit', { method: 'POST', body: b, signal: controller.signal });
         } catch (netErr){

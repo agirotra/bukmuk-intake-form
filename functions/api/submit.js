@@ -3,7 +3,9 @@
 // Accepts a multipart/form-data submission from intake.js:
 //   - field "payload"      , JSON string (Tally-compatible shape)
 //   - field "authorPhoto"  , optional image (jpeg/png/webp, <=15 MB)
-//   - field "authorArtwork", optional image (same constraints)
+//   - field "authorArtwork", optional , REPEATED once per drawing (up to
+//                            MAX_ARTWORK), read with form.getAll(). Each image
+//                            is same constraints (jpeg/png/webp, <=15 MB).
 //
 // What we do:
 //   1) Honeypot check + size limit + content-type whitelist for files
@@ -24,6 +26,7 @@
 // expects, so the round-trip is lossless.
 
 const MAX_FILE_BYTES = 15 * 1024 * 1024;       // 15 MB per file
+const MAX_ARTWORK = 8;                          // max drawings per submission
 const MAX_PAYLOAD_BYTES = 2 * 1024 * 1024;     // 2 MB JSON
 const MAX_STORY_WORDS = 10000;                 // hard ceiling on prose
 const MIN_STORY_WORDS = 30;                    // mirrors importer
@@ -263,8 +266,9 @@ function peek(payload){
     consentPhoto:      get('consentPhoto'),
     consentLocation:   get('consentLocation'),
     childAssent:       get('childAssent'),
-    hasPhoto:   !!files.authorPhoto,
-    hasArtwork: !!files.authorArtwork,
+    hasPhoto:     !!files.authorPhoto,
+    artworkCount: Array.isArray(files.authorArtwork) ? files.authorArtwork.length
+                : files.authorArtwork ? 1 : 0,
   };
 }
 
@@ -316,7 +320,7 @@ async function sendEditorNotification(env, p, meta){
     `Language note (words to keep): ${p.languageNote || '(none)'}`,
     `Editor note:  ${p.editorNote || '(none)'}`,
     `Photo:        ${p.hasPhoto ? 'attached' : 'none'}`,
-    `Artwork:      ${p.hasArtwork ? 'attached' : 'none'}`,
+    `Drawings:     ${p.artworkCount ? `${p.artworkCount} attached` : 'none'}`,
     ``,
     `Open the editor's inbox to review and import:`,
     `  ${(env.EDITOR_URL || 'https://editor.bukmuk.com').replace(/\/+$/, '')}/#/intake`,
@@ -453,10 +457,17 @@ export async function onRequestPost({ request, env, waitUntil }){
     return json({ error: 'validation failed', details: v.errors }, 400);
   }
 
-  // 5) File whitelist
-  const photoFile   = form.get('authorPhoto');
-  const artworkFile = form.get('authorArtwork');
-  for (const [slot, f] of [['authorPhoto', photoFile], ['authorArtwork', artworkFile]]){
+  // 5) File whitelist. One optional photo + zero-or-more drawings, all sent
+  //    under the "authorArtwork" field (form.getAll). Every image must pass the
+  //    type + size gate; the whole submission is rejected if any file is bad,
+  //    so a child never thinks a drawing was saved when it wasn't.
+  const photoFile    = form.get('authorPhoto');
+  const artworkFiles = form.getAll('authorArtwork').filter(f => f && typeof f !== 'string');
+  if (artworkFiles.length > MAX_ARTWORK){
+    return json({ error: `Too many drawings (${artworkFiles.length}); the limit is ${MAX_ARTWORK}` }, 400);
+  }
+  const filesToCheck = [['authorPhoto', photoFile], ...artworkFiles.map(f => ['authorArtwork', f])];
+  for (const [slot, f] of filesToCheck){
     if (!f) continue;
     if (typeof f === 'string') continue;
     if (!ALLOWED_IMAGE_TYPES.has(f.type)){
@@ -479,27 +490,36 @@ export async function onRequestPost({ request, env, waitUntil }){
     files: {},
   };
 
-  async function uploadFile(slot, file){
-    if (!file || typeof file === 'string') return null;
-    const ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
-    const key = `${id}/${slot}.${ext}`;
+  const extOf = (file) => file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+  async function putObject(objectKey, file, slot){
     if (env.INTAKE_FILES){
-      await env.INTAKE_FILES.put(key, file.stream(), {
+      await env.INTAKE_FILES.put(objectKey, file.stream(), {
         httpMetadata: { contentType: file.type },
         customMetadata: { submissionId: id, slot },
       });
     }
-    meta.files[slot] = { key, name: file.name, type: file.type, size: file.size };
-    return key;
+    return { key: objectKey, name: file.name, type: file.type, size: file.size };
   }
 
   try {
-    await uploadFile('authorPhoto',   photoFile);
-    await uploadFile('authorArtwork', artworkFile);
+    // Photo: single object at <id>/authorPhoto.<ext>.
+    if (photoFile && typeof photoFile !== 'string'){
+      meta.files.authorPhoto = await putObject(`${id}/authorPhoto.${extOf(photoFile)}`, photoFile, 'authorPhoto');
+    }
+    // Drawings: one object each. The FIRST keeps the historical name
+    // authorArtwork.<ext>; the rest are authorArtwork-2, -3, … so the set is
+    // stable, ordered, and legible in the bucket. meta.files.authorArtwork is
+    // ALWAYS an array now (importer's extractFiles reads every entry).
+    meta.files.authorArtwork = [];
+    for (let i = 0; i < artworkFiles.length; i++){
+      const f = artworkFiles[i];
+      const label = i === 0 ? 'authorArtwork' : `authorArtwork-${i + 1}`;
+      meta.files.authorArtwork.push(await putObject(`${id}/${label}.${extOf(f)}`, f, 'authorArtwork'));
+    }
 
     // Append file URLs back into the payload as additional fields so the
-    // importer's extractFile() can find them. Use the keys; the fetch
-    // script signs them when downloading.
+    // importer's extractFile()/extractFiles() can find them. Use the r2:// keys;
+    // the fetch script signs them when downloading.
     if (meta.files.authorPhoto){
       payload.data.fields.push({
         label: 'A clear photo of you (as big as you have it)',
@@ -507,11 +527,14 @@ export async function onRequestPost({ request, env, waitUntil }){
         value: { url: `r2://${meta.files.authorPhoto.key}`, name: meta.files.authorPhoto.name },
       });
     }
-    if (meta.files.authorArtwork){
+    if (meta.files.authorArtwork.length){
+      // Value is an ARRAY of {url,name}; extractFiles() imports all of them, and
+      // the legacy extractFile() (older editor) still reads the first, so an
+      // out-of-order deploy degrades gracefully instead of losing everything.
       payload.data.fields.push({
         label: "Any drawing of your own you'd like us to see",
         key:   'authorArtwork',
-        value: { url: `r2://${meta.files.authorArtwork.key}`, name: meta.files.authorArtwork.name },
+        value: meta.files.authorArtwork.map(a => ({ url: `r2://${a.key}`, name: a.name })),
       });
     }
 
