@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Consent and agreement · Bukmuk Publishing</title>
+<meta name="description" content="Bukmuk Publishing's short consent and agreement form, for young authors whose story reached us by WhatsApp, email or a call.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/bukmuk-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css?v=20260831-consent">
+<style>
+  /* Page-local only. The shared stylesheet drives the live intake form; this
+     form adds one component (the short-terms ledger) and nothing else. */
+  .terms{
+    background: rgba(255,255,255,.5);
+    border: 1px solid var(--ledger-rule);
+    padding: 22px 24px 22px 12px;
+    margin: 20px 0 4px;
+    max-height: 340px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* On a phone a nested scroll box fights the page scroll and hides eleven of
+     the fourteen terms behind a gesture nobody makes. Let the list flow. */
+  @media (max-width: 720px){
+    .terms{ max-height: none; overflow-y: visible }
+  }
+  .terms ol{
+    margin: 0; padding-left: 26px;
+    font-size: 16.5px; line-height: 1.6; color: var(--ink);
+  }
+  .terms li{ margin: 0 0 13px; padding-left: 4px }
+  .terms li:last-child{ margin-bottom: 0 }
+  .terms li::marker{
+    font-family: var(--mono); font-size: 13px; color: var(--blue);
+  }
+  .terms-head{
+    display:flex; justify-content: space-between; align-items: baseline;
+    gap: 14px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--ink-soft);
+    margin-top: 28px;
+  }
+  .terms-head a{ color: var(--blue); text-transform: none; letter-spacing: 0; font-size: 13px }
+  .scrollhint{
+    font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--ink-soft);
+    margin: 8px 0 0; text-align: right;
+  }
+  .package-line{
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: .04em;
+    color: var(--ink-soft); border-left: 2px solid var(--lime-deep);
+    padding-left: 12px; margin: 0 0 6px;
+  }
+  .consent.commercial{ border-top: 2px solid var(--blue) }
+</style>
+</head>
+<body>
+
+<a class="sr-only" href="#start">Skip to form</a>
+
+<!-- ─── Masthead ──────────────────────────────────────────────────────── -->
+<header class="masthead">
+  <div class="masthead-row">
+    <div class="masthead-meta-left">
+      Bukmuk Library &nbsp;/&nbsp; Publishing
+    </div>
+    <div class="masthead-meta-right">
+      <span class="masthead-tag">Consent &amp; agreement</span>
+      <small>One page</small>
+    </div>
+  </div>
+  <div class="logo-wrap">
+    <img src="/assets/bukmuk-logo.png" alt="Bukmuk">
+  </div>
+</header>
+<div class="masthead-rule" aria-hidden="true"></div>
+
+<!-- ─── The whole form: one ledger sheet ───────────────────────────────── -->
+<div class="guardian-wrap form-shell-guardian" id="start">
+  <div class="sheet">
+    <article class="frame ledger">
+      <span class="folio-corner">Consent &nbsp;·&nbsp; Guardian</span>
+      <div>
+        <div class="folio" style="color:var(--blue)">Bukmuk Publishing &nbsp;<span class="roman" style="color:var(--ink)">·</span> Young Author</div>
+        <span class="ledger-stamp">Parent &amp; guardian sign-off &nbsp;·&nbsp; required</span>
+        <h1 class="section-title">The grown-up's <em>page</em>.</h1>
+        <p class="lede" style="color:var(--ink)">
+          You have already sent us your child's story, so there is nothing to upload here. This page does the two things we still need in writing: your permission to publish, and your acceptance of our agreement. It takes about two minutes.
+        </p>
+
+        <form id="consentForm" novalidate>
+
+          <!-- honeypot -->
+          <div class="hp" aria-hidden="true">
+            <label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          </div>
+
+          <!-- ── The author ────────────────────────────────────────────── -->
+          <div class="terms-head" style="margin-top:34px">
+            <span>I. &nbsp;The author &amp; the book</span>
+          </div>
+          <p class="package-line" id="packageLine" hidden></p>
+
+          <div class="row2" style="margin-top:16px">
+            <div class="field" data-required>
+              <label class="cap" for="authorName">Your child's full name <span class="req">required</span></label>
+              <input class="input" id="authorName" name="authorName" type="text" required placeholder="Avish Jain">
+              <div class="field-error">The author's full name, please.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="authorAge">Their age <span class="req">required</span></label>
+              <input class="input" id="authorAge" name="authorAge" type="number" min="1" max="17" inputmode="numeric" required placeholder="9">
+              <div class="field-error">Their age in years.</div>
+            </div>
+            <div class="field" data-required style="grid-column:1 / -1">
+              <label class="cap" for="storyTitle">The story or book title <span class="req">required</span></label>
+              <input class="input" id="storyTitle" name="storyTitle" type="text" required placeholder="Mageton's Big Adventure">
+              <div class="field-error">The title we should print.</div>
+            </div>
+          </div>
+
+          <!-- ── How the name is printed ───────────────────────────────── -->
+          <div class="terms-head">
+            <span>II. &nbsp;How we print their name</span>
+          </div>
+          <p class="lede" style="font-size:16px; margin:10px 0 16px; color:var(--ink-soft)">
+            This is what goes on the cover and the title page. Pick the one you want; we print exactly this and nothing else.
+          </p>
+          <div class="field" data-required>
+            <div class="radios" role="radiogroup" aria-label="How we print the author's name">
+              <label><input type="radio" name="creditAs" value="full" required> <span>Their full name, as written above.</span></label>
+              <label><input type="radio" name="creditAs" value="first"> <span>Their first name only.</span></label>
+              <label><input type="radio" name="creditAs" value="pen"> <span>A pen name they have chosen.</span></label>
+            </div>
+            <div class="field-error">Please pick one.</div>
+          </div>
+          <div class="conditional" id="penWrap">
+            <div class="field" data-required-if="pen">
+              <label class="cap" for="penName">Their pen name</label>
+              <input class="input" id="penName" name="penName" type="text" placeholder="The Midnight Writer">
+              <div class="field-error">The pen name to print.</div>
+            </div>
+          </div>
+
+          <!-- ── Publication consent ───────────────────────────────────── -->
+          <div class="terms-head">
+            <span>III. &nbsp;Permission to publish</span>
+          </div>
+          <p class="lede" style="font-size:16px; margin:10px 0 4px; color:var(--ink-soft)">
+            Tick only what you actually agree to. The first one is required; the other two are yours to choose.
+          </p>
+
+          <div class="consent" style="margin-top:14px">
+            <label>
+              <input type="checkbox" name="consentPublish" required>
+              <span>
+                <span data-clause="consentPublish">I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.</span>
+                <span class="req-tag">required</span>
+              </span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentPhoto">
+              <span data-clause="consentPhoto">I allow the author's photo to be printed.</span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentPromo">
+              <span data-clause="consentPromo">I allow the author's photo and name to be used to promote the book, on our website, on social media and on the shop listing.</span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentLocation">
+              <span data-clause="consentLocation">I allow the author's city to be printed.</span>
+            </label>
+          </div>
+
+          <div class="conditional" id="cityWrap">
+            <div class="field" data-required-if="city">
+              <label class="cap" for="authorLocation">Which city or town should we print?</label>
+              <input class="input" id="authorLocation" name="authorLocation" type="text" placeholder="Haridwar">
+              <div class="field-error">Tell us the city, or untick the box above.</div>
+            </div>
+          </div>
+
+          <div class="conditional" id="photoWrap">
+            <div class="field">
+              <label class="cap" for="authorPhoto">Their photo <span style="font-weight:400; text-transform:none; letter-spacing:0">optional, you can also send it on WhatsApp</span></label>
+              <input class="input" id="authorPhoto" name="authorPhoto" type="file" accept="image/jpeg,image/png,image/webp">
+              <p class="hint" style="margin-top:8px">JPG, PNG or WEBP, up to 15 MB. It appears in the printed book only.</p>
+              <div class="field-error">That file needs to be a JPG, PNG or WEBP under 15 MB.</div>
+            </div>
+          </div>
+
+          <!-- ── The child's own yes ───────────────────────────────────── -->
+          <div class="terms-head">
+            <span>IV. &nbsp;The author's own yes</span>
+          </div>
+          <p class="lede" style="font-size:16px; margin:10px 0 16px; color:var(--ink-soft)">
+            Please ask them. A grown-up's permission is not the same as theirs, and we would rather not print a story its author did not want printed.
+          </p>
+          <div class="field" data-required>
+            <div class="radios" role="radiogroup" aria-label="Does the author want their story published">
+              <label><input type="radio" name="childAssent" value="Yes" required> <span>Yes, they want their story published.</span></label>
+              <label><input type="radio" name="childAssent" value="Not yet"> <span>Not yet. Please hold it and talk to us first.</span></label>
+            </div>
+            <div class="field-error">Please ask them and pick one.</div>
+          </div>
+
+          <!-- ── The agreement in short ────────────────────────────────── -->
+          <div class="terms-head">
+            <span>V. &nbsp;The agreement, in short</span>
+            <a href="https://bukmukpublishing.com/agreement" data-agreement-link target="_blank" rel="noopener">Read it in full →</a>
+          </div>
+          <p class="lede" style="font-size:16px; margin:10px 0 0; color:var(--ink-soft)">
+            The full agreement is linked above and is what you are accepting. This is the same thing in plain English, so you are not asked to tick something you have not read.
+          </p>
+
+          <div class="terms">
+            <ol data-clause-list>
+              <li>Your child owns their story. Publishing with us does not change that. You are letting us edit, design, print and sell the book for as long as it is in publication.</li>
+              <li>You are agreeing on your child's behalf, because they are under 18.</li>
+              <li>Your child earns 5% of the price of every copy sold on Amazon, in India and in the Amazon shops in other countries. We pay it every three months into the bank account you give us, once it adds up to ₹500, and we send you a statement each time. Copies we sell ourselves are already discounted, so they do not earn a royalty on top.</li>
+              <li>We print your child's name the way you choose above, their age and a short bio. Their photo and their city are printed only if you tick those boxes.</li>
+              <li>We may use the book, your child's name and the photo you give us to celebrate their work on our website and in our marketing. You can opt out of marketing at any time by writing to helpdesk@bukmuk.com.</li>
+              <li>We edit lightly and we keep your child's voice. Clear spelling, punctuation and grammar fixes, never a rewrite, never a nicer synonym. Anything that would change the meaning, we ask you both first.</li>
+              <li>You confirm the story is your child's own original work, not copied from anyone, and that it contains nothing unlawful. If that turns out not to be true we may pause or stop publishing, and you agree to cover reasonable costs we face because of it.</li>
+              <li>You see and approve the book before we print it. Changes you ask for after that, or a reprint for a mistake that was not ours, may cost extra.</li>
+              <li>Payment is in full and in advance, and we start work once it is received. Full refund if you cancel before we start. After we start and before printing, we refund the part we have not done. Once printing starts, or the book is published, it is non refundable. Workshop and mentoring seats have their own notice periods, set out in the full agreement.</li>
+              <li>We aim to have the book ready in about 8 to 10 weeks after we have the final manuscript and the payment, depending on how quickly approvals come back.</li>
+              <li>Listing on Amazon follows Amazon's own rules, which change, so we cannot promise a book stays available forever or guarantee any sales.</li>
+              <li>If something goes wrong, the most we would owe you is what you paid us for the service, and we are not responsible for indirect losses such as lost sales. Delays caused by printers, couriers or Amazon are outside our control.</li>
+              <li>Indian law applies, and any dispute goes to the courts in Delhi.</li>
+              <li>You can withdraw at any time before publication. Write to helpdesk@bukmuk.com and we remove the story and the photo from our systems. We cannot recall copies that are already printed.</li>
+            </ol>
+          </div>
+          <p class="scrollhint" id="scrollHint">Scroll the box to the end</p>
+
+          <div class="consent commercial" style="margin-top:18px">
+            <label>
+              <input type="checkbox" name="agreementAccepted" required>
+              <span>
+                <span data-clause="agreementAccepted">I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.</span>
+                <span class="req-tag">required</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- ── Sign ──────────────────────────────────────────────────── -->
+          <div class="terms-head">
+            <span>VI. &nbsp;Your details and signature</span>
+          </div>
+
+          <div class="row2" style="margin-top:16px">
+            <div class="field" data-required>
+              <label class="cap" for="guardianName">Your full name <span class="req">required</span></label>
+              <input class="input" id="guardianName" name="guardianName" type="text" required autocomplete="name" placeholder="Priya Sharma">
+              <div class="field-error">Your full name, please.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="guardianRelation">Your relationship to the author <span class="req">required</span></label>
+              <input class="input" id="guardianRelation" name="guardianRelation" type="text" required placeholder="Mother">
+              <div class="field-error">Mother, father, guardian, etc.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="guardianEmail">Email <span class="req">required</span></label>
+              <input class="input" id="guardianEmail" name="guardianEmail" type="email" required autocomplete="email" placeholder="priya@example.in">
+              <div class="field-error">A valid email so we can send you a copy.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="guardianPhone">Phone <span class="req">required</span></label>
+              <input class="input" id="guardianPhone" name="guardianPhone" type="tel" required autocomplete="tel" placeholder="+91 98xxxxxxxx">
+              <div class="field-error">Phone number, please.</div>
+            </div>
+          </div>
+
+          <div class="sig-row">
+            <div class="field" data-required>
+              <label class="cap" for="guardianSignature">Type your full name as a signature <span class="req">required</span></label>
+              <input class="input" id="guardianSignature" name="guardianSignature" type="text" required placeholder="Your full name">
+              <div class="field-error">A typed signature matters legally; please type your name.</div>
+            </div>
+            <div class="field" data-required>
+              <label class="cap" for="consentDate">Date <span class="req">required</span></label>
+              <input class="input" id="consentDate" name="consentDate" type="date" required>
+              <div class="field-error">Today's date.</div>
+            </div>
+          </div>
+
+          <div class="actions" style="justify-content: flex-end">
+            <button class="btn primary" type="submit" id="submitBtn">Sign and send →</button>
+          </div>
+
+          <div class="field-error" id="submitError" style="margin-top: 14px"></div>
+        </form>
+      </div>
+
+      <aside class="marginalia">
+        <span class="tag">For guardians</span>
+        <p>You are signing two things here: <em>permission to publish</em> your child's work, and the <em>Young Author Agreement</em> that covers payment, royalties and refunds. Both are on this page.</p>
+        <p>Light edits means clear spelling, punctuation and grammar. <em>We never restructure sentences or replace words.</em> If a change would alter the meaning, we ask you both first.</p>
+        <p>The photo appears <em>only in the printed book</em> unless you have also allowed marketing use.</p>
+        <p>We email you a copy of everything you tick here, the moment you send it. Keep it.</p>
+        <p>Withdraw any time before print and we delete the story and photo from our systems.</p>
+        <p class="editor-contact">Questions?<br>
+          <a href="mailto:helpdesk@bukmuk.com" style="color:var(--blue); text-decoration:none">helpdesk@bukmuk.com</a><br>
+          <a href="https://wa.me/918130286286?text=Hi%20Bukmuk%2C%20about%20the%20consent%20form" target="_blank" rel="noopener" style="color:var(--blue); text-decoration:none">WhatsApp +91 81302 86286</a>
+        </p>
+      </aside>
+    </article>
+  </div>
+</div>
+
+<!-- ─── Thank you (hidden until submit succeeds) ────────────────────────── -->
+<div class="thankyou" id="thankyou">
+  <section class="sheet">
+    <article class="frame">
+      <span class="folio-corner">Signed</span>
+      <div>
+        <div class="folio">Section &nbsp;<span class="roman">∗</span> All done</div>
+        <h1 class="section-title">Thank you. That's <em>everything</em>.</h1>
+        <p class="lede">We have your consent and your agreement on file. A copy is on its way to your email; keep it. If anything on it looks wrong, reply to that email and we will fix it before we print.</p>
+        <p class="ref">Reference &nbsp;<b id="refCode"></b></p>
+      </div>
+      <aside class="marginalia">
+        <span class="tag">What's next</span>
+        <p>We carry on with the book. You will see a proof to approve before anything is printed.</p>
+        <p>Nothing goes to print without your final yes.</p>
+      </aside>
+    </article>
+  </section>
+</div>
+
+<!-- ─── Colophon ───────────────────────────────────────────────────────── -->
+<footer class="colophon">
+  <div class="row">
+    <span>Bukmuk &nbsp;·&nbsp; Consent &amp; agreement</span>
+    <span>
+      <a href="mailto:helpdesk@bukmuk.com">helpdesk@bukmuk.com</a>
+      &nbsp;·&nbsp;
+      <a href="https://wa.me/918130286286?text=Hi%20Bukmuk%2C%20about%20the%20consent%20form" target="_blank" rel="noopener">WhatsApp +91&nbsp;81302&nbsp;86286</a>
+    </span>
+    <span>© Bukmuk Library 2026 &nbsp;·&nbsp; <a href="https://bukmukpublishing.com">bukmukpublishing.com</a></span>
+  </div>
+</footer>
+
+<script src="/consent-clauses.js?v=20260831-consent"></script>
+<script src="/consent.js?v=20260831-consent" defer></script>
+</body>
+</html>

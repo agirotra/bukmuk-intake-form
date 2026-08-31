@@ -54,10 +54,38 @@ const FIELD_LABELS = {
   // "(keeping the child's voice)" clause + the §IX marginalia
   consentPhoto:      "I allow the author's photo to be printed.",
   consentLocation:   "I allow the author's city to be printed.",
+  // See the note in consent-clauses.js. Asked on both forms since 2026-08-31.
+  consentPromo:      "I allow the author's photo and name to be used to promote the book, on our website, on social media and on the shop listing.",
   guardianSignature: 'Type your full name as a signature',
   consentDate:       'Date',
   book:              'book',
+
+  // consent.html only , the short consent + agreement form for stories that
+  // reached us on WhatsApp, by email or on a call. See CONSENT-ONLY MODE below.
+  agreementAccepted: 'I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.',
+  agreementVersion:  'Agreement version',
+  agreementSummary:  'Agreement summary as shown',
+  agreementUrl:      'Full agreement URL',
+  packageName:       'packageName',
+  packageTotal:      'packageTotal',
+  formKind:          'formKind',
 };
+
+// ─── CONSENT-ONLY MODE ─────────────────────────────────────────────────────
+// consent.html posts here too, with formKind: "consent". It carries no story,
+// bio, inspiration or drawings, because those arrived by another route; what
+// it carries is the legal record: publication consent, acceptance of the Young
+// Author Agreement, the guardian's typed signature, and the exact summary text
+// the parent read at signing time.
+//
+// Two things change for these submissions:
+//   1. Validation drops the story fields and adds the agreement tick.
+//   2. They persist under the consent/ prefix in R2, so the editor's story
+//      importer never tries to build a book out of a signature.
+// Everything else, sanitisation, the workshop gate, files, emails, is shared.
+function isConsentOnly(payload){
+  return String(fieldValue(payload, 'formKind') || '').toLowerCase() === 'consent';
+}
 
 // Tolerant string compare on Tally labels (case + punctuation insensitive).
 function normLabel(s){
@@ -120,14 +148,33 @@ function wordCount(s){
 function validateOnServer(payload){
   const r = buildLookup(payload);
   const errors = [];
-  const reqStr = ['authorName','authorLocation','authorBio','storyTitle','story','inspiration',
-    'guardianName','guardianRelation','guardianEmail','guardianPhone','guardianSignature','consentDate'];
+  const consentOnly = isConsentOnly(payload);
+  // A consent-only submission has no story to validate. The city is required
+  // only when the guardian asked us to print one, which is the same rule the
+  // client enforces, and the same fail-safe the importer applies downstream.
+  const reqStr = consentOnly
+    ? ['authorName','storyTitle',
+       'guardianName','guardianRelation','guardianEmail','guardianPhone','guardianSignature','consentDate']
+    : ['authorName','authorLocation','authorBio','storyTitle','story','inspiration',
+       'guardianName','guardianRelation','guardianEmail','guardianPhone','guardianSignature','consentDate'];
+  if (consentOnly && isChecked(r.consentLocation) && !String(r.authorLocation || '').trim()){
+    errors.push('missing: authorLocation (city consent ticked)');
+  }
   for (const k of reqStr){
     if (!String(r[k] || '').trim()) errors.push(`missing: ${k}`);
   }
+  // The authors' intake is a 7 to 15 programme, so the full form holds that
+  // line. The consent form does not: it is signed by families we are already
+  // working with, and some of those authors are younger. Avish Jain was 6 when
+  // Mageton's Big Adventure was written, and a 7-15 gate here would have
+  // refused his own mother's consent. The only thing consent mode needs to be
+  // sure of is that the author is a minor, which is why a guardian is signing.
   const age = parseInt(String(r.authorAge || ''), 10);
-  if (!Number.isInteger(age) || age < 7 || age > 15) errors.push('authorAge must be 7-15');
-  if (r.story && wordCount(r.story) < MIN_STORY_WORDS) errors.push(`story too short (< ${MIN_STORY_WORDS} words)`);
+  const [minAge, maxAge] = consentOnly ? [1, 17] : [7, 15];
+  if (!Number.isInteger(age) || age < minAge || age > maxAge){
+    errors.push(`authorAge must be ${minAge}-${maxAge}`);
+  }
+  if (!consentOnly && r.story && wordCount(r.story) < MIN_STORY_WORDS) errors.push(`story too short (< ${MIN_STORY_WORDS} words)`);
   if (r.story && wordCount(r.story) > MAX_STORY_WORDS) errors.push(`story too long (> ${MAX_STORY_WORDS} words)`);
   if (r.guardianEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(r.guardianEmail))){
     errors.push('guardianEmail invalid');
@@ -140,6 +187,14 @@ function validateOnServer(payload){
     errors.push('pen name chosen but penName is empty');
   }
   if (!isChecked(r.consentPublish)) errors.push('consentPublish not ticked');
+  // The commercial half. A consent-form signature that does not accept the
+  // agreement is not a signature we can act on, so it is a hard failure and
+  // never a warning: the whole point of the form is that both are captured.
+  if (consentOnly){
+    if (!isChecked(r.agreementAccepted)) errors.push('agreementAccepted not ticked');
+    if (!String(r.agreementVersion || '').trim()) errors.push('missing: agreementVersion');
+    if (!String(r.agreementSummary || '').trim()) errors.push('missing: agreementSummary');
+  }
   // consentVoice retired 2026-05-22 (was redundant with consentPublish)
   const assent = String(r.childAssent || '').trim().toLowerCase();
   if (!assent) errors.push('childAssent missing');
@@ -265,7 +320,16 @@ function peek(payload){
     consentPublish:    get('consentPublish'),
     consentPhoto:      get('consentPhoto'),
     consentLocation:   get('consentLocation'),
+    consentPromo:      get('consentPromo'),
     childAssent:       get('childAssent'),
+    // consent.html only
+    formKind:          get('formKind'),
+    agreementAccepted: get('agreementAccepted'),
+    agreementVersion:  get('agreementVersion'),
+    agreementSummary:  get('agreementSummary'),
+    agreementUrl:      get('agreementUrl'),
+    packageName:       get('packageName'),
+    packageTotal:      get('packageTotal'),
     hasPhoto:     !!files.authorPhoto,
     artworkCount: Array.isArray(files.authorArtwork) ? files.authorArtwork.length
                 : files.authorArtwork ? 1 : 0,
@@ -287,12 +351,17 @@ function firstName(full){
 async function sendEditorNotification(env, p, meta){
   const to = env.NOTIFY_TO || 'abhinav.girotra@gmail.com';
   const replyTo = env.SES_REPLY_TO || to;
+  const consentOnly = p.formKind === 'consent';
   const lines = [
-    `Bukmuk Authors' Intake , new submission`,
+    consentOnly
+      ? `Bukmuk , signed consent + agreement (no story attached)`
+      : `Bukmuk Authors' Intake , new submission`,
     ``,
     `Author:       ${p.authorName || '(unknown)'}${p.authorAge ? ` (age ${p.authorAge})` : ''}`,
     `Story title:  ${p.storyTitle || '(untitled)'}`,
-    `Word count:   ${wordCountStr(p.story)}`,
+    consentOnly ? null : `Word count:   ${wordCountStr(p.story)}`,
+    consentOnly && (p.packageName || p.packageTotal)
+      ? `Package:      ${[p.packageName, p.packageTotal].filter(Boolean).join(' , ')}` : null,
     `Target book:  ${p.book || '(not specified)'}`,
     p.channel ? `Channel:      ${p.channel}` : null,
     p.cohort  ? `Cohort:       ${p.cohort}`  : null,
@@ -308,8 +377,10 @@ async function sendEditorNotification(env, p, meta){
     `Publish:      ${yesNo(p.consentPublish)}`,
     `Print photo:  ${yesNo(p.consentPhoto)}`,
     `Print city:   ${yesNo(p.consentLocation)}`,
+    `Promo use:    ${yesNo(p.consentPromo)}`,
     `Child assent: ${p.childAssent || '(none)'}`,
     `Credit as:    ${p.creditAs || '(none)'}${p.penName ? ` , pen name: ${p.penName}` : ''}`,
+    consentOnly ? `Agreement:    ${yesNo(p.agreementAccepted)} (${p.agreementVersion || 'no version'})` : null,
     ``,
     `, Author details ,`,
     `Location:     ${p.authorLocation || '(none)'}`,
@@ -322,11 +393,12 @@ async function sendEditorNotification(env, p, meta){
     `Photo:        ${p.hasPhoto ? 'attached' : 'none'}`,
     `Drawings:     ${p.artworkCount ? `${p.artworkCount} attached` : 'none'}`,
     ``,
-    `Open the editor's inbox to review and import:`,
-    `  ${(env.EDITOR_URL || 'https://editor.bukmuk.com').replace(/\/+$/, '')}/#/intake`,
+    consentOnly
+      ? `Attach it to the story with:\n  node scripts/import-consent.js --book ${p.book || '<book>'} --file <downloaded>.json`
+      : `Open the editor's inbox to review and import:\n  ${(env.EDITOR_URL || 'https://editor.bukmuk.com').replace(/\/+$/, '')}/#/intake`,
     ``,
     `R2 object key (for manual pull if needed):`,
-    `  bukmuk-intake-submissions/${meta.id}.json`,
+    `  bukmuk-intake-submissions/${meta.key || (meta.id + '.json')}`,
   ].filter(Boolean).join('\n');
 
   await sendSesEmail({
@@ -334,7 +406,9 @@ async function sendEditorNotification(env, p, meta){
     from: env.SES_FROM_ADDRESS,
     to,
     replyTo,
-    subject: `New submission: ${p.storyTitle || '(untitled)'} by ${p.authorName || 'an author'}`,
+    subject: consentOnly
+      ? `Signed consent: ${p.storyTitle || '(untitled)'} by ${p.authorName || 'an author'}`
+      : `New submission: ${p.storyTitle || '(untitled)'} by ${p.authorName || 'an author'}`,
     text: lines,
   });
 }
@@ -348,6 +422,55 @@ async function sendParentConfirmation(env, p, meta){
   const child = firstName(p.authorName);
   const greet = p.guardianName ? `Hello ${firstName(p.guardianName)},` : `Hello,`;
 
+  // A consent-only signature is a legal record, so the parent's copy quotes
+  // the agreement summary VERBATIM as it appeared on their screen (the client
+  // sends the rendered text, not a pointer to it). A summary they can no
+  // longer see is not evidence of what they accepted.
+  if (p.formKind === 'consent'){
+    const consentText = [
+      greet,
+      ``,
+      `Thank you. We have your consent and your agreement for ${child}'s book, "${p.storyTitle || '(untitled)'}", and this email is your copy. Please keep it.`,
+      ``,
+      `Your reference is ${meta.reference}.`,
+      (p.packageName || p.packageTotal) ? `Package: ${[p.packageName, p.packageTotal].filter(Boolean).join(', ')}` : null,
+      ``,
+      `WHAT YOU AGREED TO`,
+      ``,
+      `  ,  Publish ${child}'s story in a Bukmuk book (which may be sold on public platforms including Amazon): ${yesNo(p.consentPublish)}`,
+      `  ,  Print the author's photo: ${yesNo(p.consentPhoto)}`,
+      `  ,  Print the author's city${p.authorLocation ? ` (${p.authorLocation})` : ''}: ${yesNo(p.consentLocation)}`,
+      `  ,  Use the author's photo and name to promote the book (website, social media, shop listing): ${yesNo(p.consentPromo)}`,
+      `  ,  Name printed on the book: ${p.creditAs || '(not specified)'}${p.penName ? ` (${p.penName})` : ''}`,
+      `  ,  ${child} wants the story published: ${p.childAssent || '(not answered)'}`,
+      `  ,  Bukmuk Young Author Agreement accepted: ${yesNo(p.agreementAccepted)}${p.agreementVersion ? ` (version ${p.agreementVersion})` : ''}`,
+      `  ,  Signed by ${p.guardianSignature || p.guardianName || 'you'}${p.consentDate ? ` on ${p.consentDate}` : ''}.`,
+      ``,
+      `THE AGREEMENT IN SHORT, AS IT APPEARED ON THE PAGE YOU SIGNED`,
+      ``,
+      p.agreementSummary || '(not recorded)',
+      ``,
+      p.agreementUrl ? `The full agreement, which is what you accepted, is at ${p.agreementUrl}` : null,
+      ``,
+      `If anything above is wrong, reply to this email and we will fix it before we print. To withdraw at any time before publication, reply here or write to helpdesk@bukmuk.com and we will remove the story and photo from our systems.`,
+      ``,
+      `Questions any time: helpdesk@bukmuk.com  or  WhatsApp +91 81302 86286`,
+      ``,
+      `, Bukmuk Editorial Team`,
+      `  bukmukpublishing.com`,
+    ].filter(v => v !== null).join('\n');
+
+    await sendSesEmail({
+      env,
+      from: env.SES_FROM_ADDRESS,
+      to: p.guardianEmail,
+      replyTo,
+      subject: `Your copy: consent and agreement for ${child}'s book`,
+      text: consentText,
+    });
+    return;
+  }
+
   const text = [
     greet,
     ``,
@@ -359,6 +482,7 @@ async function sendParentConfirmation(env, p, meta){
     `  ,  Publish ${child}'s story in a Bukmuk book (which may be sold on public platforms including Amazon): ${yesNo(p.consentPublish)}`,
     `  ,  Print the author's photo: ${yesNo(p.consentPhoto)}`,
     `  ,  Print the author's city${p.authorLocation ? ` (${p.authorLocation})` : ''}: ${yesNo(p.consentLocation)}`,
+    `  ,  Use the author's photo and name to promote the book: ${yesNo(p.consentPromo)}`,
     `  ,  ${child} wants the story in the book: ${p.childAssent || '(not answered)'}`,
     `  ,  Signed by ${p.guardianSignature || p.guardianName || 'you'}${p.consentDate ? ` on ${p.consentDate}` : ''}.`,
     ``,
@@ -478,11 +602,19 @@ export async function onRequestPost({ request, env, waitUntil }){
     }
   }
 
-  // 6) Persist , each submission gets its own UUID-prefixed bucket of objects
+  // 6) Persist , each submission gets its own UUID-prefixed bucket of objects.
+  //
+  // Consent-only records go under the consent/ prefix. The editor's story
+  // importer lists the bucket root, so a signature filed at the root would be
+  // read as a story with no prose and rejected on every pull, for ever. The
+  // prefix is the whole separation: same bucket, same shape, different shelf.
+  const consentOnly = isConsentOnly(payload);
   const id = uuid();
   const ref = refFromId(id);
   const meta = {
     id,
+    key: consentOnly ? `consent/${id}.json` : `${id}.json`,
+    kind: consentOnly ? 'consent' : 'submission',
     reference: ref,
     receivedAt: new Date().toISOString(),
     ip,
@@ -544,9 +676,9 @@ export async function onRequestPost({ request, env, waitUntil }){
     payload._meta = meta;
 
     if (env.INTAKE_SUBMISSIONS){
-      await env.INTAKE_SUBMISSIONS.put(`${id}.json`, JSON.stringify(payload, null, 2), {
+      await env.INTAKE_SUBMISSIONS.put(meta.key, JSON.stringify(payload, null, 2), {
         httpMetadata: { contentType: 'application/json' },
-        customMetadata: { reference: ref, receivedAt: meta.receivedAt },
+        customMetadata: { reference: ref, receivedAt: meta.receivedAt, kind: meta.kind },
       });
     } else {
       // Local-dev fallback: just log; the test harness reads from the
@@ -561,7 +693,7 @@ export async function onRequestPost({ request, env, waitUntil }){
       waitUntil(fireNotificationEmails(env, payload, meta));
     }
 
-    return json({ ok: true, id, reference: ref });
+    return json({ ok: true, id, reference: ref, kind: meta.kind });
   } catch (err){
     return json({ error: 'persistence failed', detail: String(err && err.message || err) }, 500);
   }

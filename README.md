@@ -2,7 +2,18 @@
 
 > **Live:** [`submit.bukmukpublishing.com`](https://submit.bukmukpublishing.com) · also at `bukmuk-intake.pages.dev`
 
-The public form children fill in to submit a story to Bukmuk Publishing.
+**Two forms, one endpoint.**
+
+| Page | Who it is for | What it collects |
+|---|---|---|
+| `/` (`index.html`) | A child submitting a story through the authors' intake | The whole story, the author, the drawings, and the guardian's consent (folio IX) |
+| `/consent` (`consent.html`) | A family whose story reached us on WhatsApp, by email or in a call | Publication consent **and** acceptance of the Young Author Agreement. No story: that arrived by another route |
+
+Both post to the same `/api/submit` Function. The short form sends
+`formKind: "consent"`, which relaxes the story fields and files the record
+under the `consent/` prefix in R2 so the editor's story importer never tries
+to build a book out of a signature.
+
 Static HTML + CSS + JS + one Cloudflare Pages Function. No build step,
 no framework, no analytics.
 
@@ -18,19 +29,22 @@ Two repos, intentionally separate:
 
 ```
 This repo (bukmuk-intake-form, public)            bukmuk-editor (private)
-├── index.html                                    ├── pipeline.js + agents
-├── styles.css                                    ├── lib/, books/, etc.
-├── intake.js                                     ├── scripts/import-submissions.js
-├── assets/bukmuk-logo.png                        └── test/intake-form.test.js
-├── functions/api/submit.js  ←──── POST ───→         ↑ contract round-trip test
-└── scripts/setup-cloudflare.js                      against this form's labels
+├── index.html      (full intake)                 ├── pipeline.js + agents
+├── intake.js                                     ├── lib/, books/, etc.
+├── consent.html    (consent + agreement)         ├── scripts/import-submissions.js
+├── consent.js                                    ├── scripts/import-consent.js
+├── consent-clauses.js  ← clause SSOT             └── test/intake-form.test.js
+├── styles.css                                       ↑ contract round-trip test
+├── assets/bukmuk-logo.png                             against this form's labels
+├── functions/api/submit.js  ←──── POST ───→
+├── test/consent-form.test.mjs
+└── scripts/setup-cloudflare.js
 
               ↓ writes
-       R2: bukmuk-intake-submissions  (Tally-compatible JSON, one file per submission)
+       R2: bukmuk-intake-submissions
+             <uuid>.json          full story submissions  → import-submissions.js
+             consent/<uuid>.json  signatures only         → import-consent.js
        R2: bukmuk-intake-files        (photo + drawing uploads)
-                                                  ↑
-                                        editor pulls down, pipes through
-                                        scripts/import-submissions.js
 ```
 
 Why split: the editor repo holds the editorial pipeline and (eventually)
@@ -54,7 +68,110 @@ contract, not by code.
 The guardian consent section (§IX) deliberately flips register: ruled
 blue-tinted ledger paper, italic typed-signature font, no Lime accent.
 This is the legal block; it intentionally does not look like the rest
-of the form.
+of the form. `/consent` is that same ledger register for the whole page,
+because the whole page is the legal block.
+
+---
+
+## The consent + agreement form (`/consent`)
+
+Plenty of stories never come through the intake form. A parent sends a
+Word file on WhatsApp, a teacher forwards a PDF, a child reads a chapter
+down the phone. The story arrives; the paperwork does not. `/consent` is
+the paperwork on its own, in about two minutes on a phone.
+
+It asks for two things, and they are **separate acts**:
+
+1. **Permission to publish** , the same three ticks as folio IX of the full
+   form, matched by the same labels, landing in the same consent ledger.
+2. **Acceptance of the Young Author Agreement** , the commercial half:
+   royalties, refunds, approval before print, Indian law. Presented as a
+   plain-English short version on the page, with the full agreement linked.
+   The tick accepts the full agreement; the summary exists so nobody is
+   asked to accept something they have not read.
+
+Neither implies the other, so both are required and both are validated
+server side.
+
+### Clause text lives in exactly one place
+
+`consent-clauses.js` is the single source of truth for every tick and for
+the short-version text. Both pages load it before their own script.
+
+This is not decoration. The Young Author Agreement already exists twice in
+the `bukmuk-publishing` repo (`PARENT_AGREEMENT.md` and
+`src/app/(site)/agreement/page.tsx`), separately hand-maintained, and only
+the `.tsx` is what parents actually sign. A third hand-copied set of clauses
+is how you end up with three different promises.
+
+The HTML still carries the same text inline, so the page reads correctly
+with no JavaScript. `applyClauses()` overwrites it from the SSOT on load, so
+the module wins, and logs a console warning naming the key if the two have
+drifted.
+
+The **summary** is not mirrored server side at all. `consent.js` sends the
+rendered text as `agreementSummary`, so the stored record and the parent's
+emailed copy quote what was on their screen. A summary that can be edited
+later is not evidence of what was accepted.
+
+### Sending it to a family
+
+One tap on WhatsApp. Every field stays editable; the parent corrects
+anything we got wrong.
+
+```
+https://submit.bukmukpublishing.com/consent
+  ?child=Avish%20Jain
+  &age=6
+  &title=Mageton%27s%20Big%20Adventure
+  &book=mageton-avish
+  &package=Signature%20Paperback
+  &total=INR%209%2C500
+  &guardian=Neha%20Jain
+  &relation=Mother
+  &email=neha%40example.in
+  &phone=%2B919812345678
+  &city=Haridwar
+  &channel=whatsapp
+  &code=<workshop code, if the gate is on>
+```
+
+`channel` records how the story reached us (`whatsapp` / `email` / `call`)
+and lands in the consent ledger. It defaults to `direct`.
+
+### Age
+
+The authors' intake is a 7 to 15 programme and holds that line. This form
+does not: it is signed by families we are already working with, and some of
+those authors are younger. Avish Jain was 6 when he wrote *Mageton's Big
+Adventure*, and a 7-15 gate here would have refused his own mother's
+consent. Consent mode accepts 1 to 17. The only thing it needs to be sure
+of is that the author is a minor, which is why a guardian is signing at all.
+
+### Getting it into the editor
+
+```bash
+npx wrangler r2 object list bukmuk-intake-submissions --prefix consent/
+npx wrangler r2 object get bukmuk-intake-submissions/consent/<uuid>.json > /tmp/consent.json
+
+# in bukmuk-editor
+node scripts/import-consent.js --book mageton-avish --file /tmp/consent.json --dry-run
+node scripts/import-consent.js --book mageton-avish --file /tmp/consent.json
+```
+
+It attaches the signature to the slug it belongs to, merging into any
+existing `submissions/<slug>.consent.json` and keeping the previous version
+beside it. It never guesses a slug: if the author's name does not resolve to
+exactly one story, it stops and prints the candidates.
+
+### Tests
+
+```bash
+node --test test/consent-form.test.mjs
+```
+
+Drives the real Cloudflare Function with a payload built from the real
+clause module, so the fixture cannot drift from what a browser sends.
 
 ---
 
@@ -323,7 +440,7 @@ the editorial commitment.
 - All form fields have explicit `<label>` associations; required fields
   carry a visible `required` tag and the field's error text shows
   inline on validation failure.
-- The age wheel (7–15) is a styled radio group with full keyboard
+- The age wheel (7 to 15) is a styled radio group with full keyboard
   support; focus rings are honoured.
 - The consent checkboxes are large click/tap targets (28px box + the
   entire label text is clickable).

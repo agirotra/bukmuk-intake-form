@@ -521,13 +521,17 @@
             <label>
               <input type="checkbox" name="consentPublish" required>
               <span>
-                I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.
+                <span data-clause="consentPublish">I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.</span>
                 <span class="req-tag">required</span>
               </span>
             </label>
             <label>
               <input type="checkbox" name="consentPhoto">
               <span>I allow the author's photo to be printed in the book.</span>
+            </label>
+            <label>
+              <input type="checkbox" name="consentPromo">
+              <span data-clause="consentPromo">I allow the author's photo and name to be used to promote the book, on our website, on social media and on the shop listing.</span>
             </label>
             <label>
               <input type="checkbox" name="consentLocation">
@@ -584,7 +588,7 @@
         <div class="folio">Section &nbsp;<span class="roman">∗</span> All done</div>
         <h1 class="section-title">We have your <em>story</em>.</h1>
         <p class="lede">An editor will write back within a fortnight. We'll share what we'd like to edit, and we'll always ask before changing anything. Until then, save this reference if you need to write to us about it.</p>
-        <p class="ref">Reference &nbsp;<b id="refCode">—</b></p>
+        <p class="ref">Reference &nbsp;<b id="refCode"></b></p>
         <p class="lede" style="margin-top: 36px">If you want to send another story, you can <a href="/" style="color:var(--blue)">start a new form</a>. Each story gets its own.</p>
       </div>
       <aside class="marginalia">
@@ -610,6 +614,7 @@
   </div>
 </footer>
 
-<script src="/intake.js?v=20260710-multiart" defer></script>
+<script src="/consent-clauses.js?v=20260831-consent"></script>
+<script src="/intake.js?v=20260831-promo" defer></script>
 </body>
 </html>

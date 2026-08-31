@@ -60,6 +60,12 @@
     // §IX marginalia. Importer accepts payloads with or without it.
     consentPhoto:      "I allow the author's photo to be printed.",
     consentLocation:   "I allow the author's city to be printed.",
+    // Printing a child's photo in their own book and putting that child on our
+    // website, on social media and on a shop listing are different decisions,
+    // and we do the second. Added 2026-08-31 to BOTH forms at once; the text
+    // comes from consent-clauses.js, the single source of truth.
+    consentPromo:      (window.BUKMUK_CONSENT && window.BUKMUK_CONSENT.LABELS.consentPromo)
+                       || "I allow the author's photo and name to be used to promote the book, on our website, on social media and on the shop listing.",
     guardianSignature: 'Type your full name as a signature',
     consentDate:       'Date',
 
@@ -647,7 +653,7 @@
     // consent checkboxes , emit the long label text when ticked (mirrors
     // how a real Tally export reads them; the importer's isChecked() does
     // the heavy lifting either way). consentVoice retired 2026-05-22.
-    for (const key of ['consentPublish','consentPhoto','consentLocation']){
+    for (const key of ['consentPublish','consentPhoto','consentLocation','consentPromo']){
       const el = guardianForm.elements[key];
       if (el && el.checked) add(key, LABELS[key]);
     }
