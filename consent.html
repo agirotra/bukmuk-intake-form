@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260831-consent">
+<link rel="stylesheet" href="/styles.css?v=20260831-code01">
 <style>
   /* Page-local only. The shared stylesheet drives the live intake form; this
      form adds one component (the short-terms ledger) and nothing else. */
@@ -103,6 +103,14 @@
             <span>I. &nbsp;The author &amp; the book</span>
           </div>
           <p class="package-line" id="packageLine" hidden></p>
+
+          <div class="field" id="codeWrap" hidden style="margin-top:16px">
+            <label class="cap" for="workshopCode">Access code <span class="req">required</span></label>
+            <input class="input" id="workshopCode" name="workshopCode" type="text" autocomplete="off"
+                   placeholder="the code in the message we sent you">
+            <p class="hint">Normally this is already filled in from the link we sent. If you are seeing this box, the link lost it somewhere: check the message for a short code, or write to <a href="mailto:helpdesk@bukmuk.com" style="color:var(--blue)">helpdesk@bukmuk.com</a> and we will send a fresh link.</p>
+            <div class="field-error">Please enter the code from the message we sent you.</div>
+          </div>
 
           <div class="row2" style="margin-top:16px">
             <div class="field" data-required>
@@ -346,6 +354,6 @@
 </footer>
 
 <script src="/consent-clauses.js?v=20260831-consent"></script>
-<script src="/consent.js?v=20260831-consent" defer></script>
+<script src="/consent.js?v=20260831-code01" defer></script>
 </body>
 </html>

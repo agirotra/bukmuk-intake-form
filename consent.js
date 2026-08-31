@@ -106,6 +106,20 @@
   prefill('guardianEmail', params.get('email'));
   prefill('guardianPhone', params.get('phone'));
 
+  // The access code. The link normally carries it and the field stays hidden,
+  // because a parent has no idea what it is and should not be asked. It is
+  // revealed ONLY when the link arrived without one, which happens for real:
+  // a long URL truncated by a messaging app, a forwarded message, an address
+  // typed by hand. Without this the submission is refused at the edge with a
+  // 403 the parent can do nothing about, on a form whose entire job is to be
+  // possible for a parent to complete.
+  var codeWrap = $('#codeWrap');
+  var codeEl = form.elements['workshopCode'];
+  if (!hidden.workshopCode && codeWrap){
+    codeWrap.hidden = false;
+    if (codeEl) codeEl.setAttribute('required', 'required');
+  }
+
   // Package line, shown only when the link carries one.
   if (hidden.packageName || hidden.packageTotal){
     var line = $('#packageLine');
@@ -191,6 +205,11 @@
       bad.push(el);
     }
     function ok(el){ var f = fieldOf(el); if (f) f.classList.remove('error'); }
+
+    // Required only when the link did not carry a code (see above).
+    if (codeWrap && !codeWrap.hidden){
+      if (!String(codeEl && codeEl.value || '').trim()) flag(codeEl); else ok(codeEl);
+    }
 
     ['authorName','storyTitle','guardianName','guardianRelation',
      'guardianEmail','guardianPhone','guardianSignature','consentDate'].forEach(function (k) {
@@ -291,8 +310,15 @@
     add('formKind', 'consent', 'formKind');
 
     Object.keys(hidden).forEach(function (k) {
-      if (hidden[k]) add(k, hidden[k], k === 'workshopCode' ? 'Workshop code' : k);
+      if (k === 'workshopCode') return;   // handled below, typed value wins
+      if (hidden[k]) add(k, hidden[k], k);
     });
+
+    // Typed code beats the link's, so a parent correcting a mangled link is
+    // not silently overridden by the empty value the link supplied.
+    var typedCode = String(codeEl && codeEl.value || '').trim();
+    var code = typedCode || hidden.workshopCode;
+    if (code) add('workshopCode', code, 'Workshop code');
 
     return { data: { fields: fields }, _client: { submittedAt: new Date().toISOString() } };
   }
