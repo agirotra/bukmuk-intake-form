@@ -19,6 +19,7 @@
     authorBio:         "Tell us about you in a few lines, the way you'd tell a friend",
     storyTitle:        "Your story's title",
     story:             'Paste or type your whole story here. Write it exactly how you want it, we keep your voice.',
+    storyFile:         'Or upload your story as a file',
     hasChapters:       'Does your story have chapters?',
     languageNote:      'Did you use words from Hindi, Tamil, or any other language? List them so we keep them.',
     inspiration:       'What gave you the idea for this story?',
@@ -126,9 +127,45 @@
 
   // authorPhoto is a single File (one back-of-book portrait); authorArtwork is
   // an array , a child may share several drawings / illustrations for one story.
-  const fileBlobs = { authorPhoto: null, authorArtwork: [] };
+  const fileBlobs = { authorPhoto: null, authorArtwork: [], storyFile: null };
   const MAX_ARTWORK = 8;
   const MAX_FILE_BYTES = 15 * 1024 * 1024;
+  // Which documents ingest.js can actually parse, mirrored from the editor
+  // repo's lib/story-file-types.js and functions/api/submit.js. Match on the
+  // EXTENSION first and the MIME type only as a fallback, never MIME alone:
+  // Windows sends application/octet-stream for a .docx and .md usually
+  // arrives with an empty type, so a MIME-only gate refuses real manuscripts.
+  const STORY_FILE_EXTS = ['docx', 'pdf', 'txt', 'md'];
+  const STORY_FILE_MIME = {
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+    'application/pdf': 'pdf',
+    'text/plain': 'txt',
+    'text/markdown': 'md',
+    'text/x-markdown': 'md',
+  };
+  // The near-misses a family will actually attach. Each names the fix: a
+  // refusal a parent cannot act on is a story we never receive.
+  const UNSUPPORTED_STORY_FORMATS = {
+    doc:   "that is Word's old .doc format. Open it and choose File, then Save As, then Word Document (.docx)",
+    pages: 'that is an Apple Pages file. Open it and choose File, then Export To, then Word (.docx)',
+    odt:   'that is an OpenDocument file. Open it and choose File, then Save As, then Word Document (.docx)',
+    rtf:   'that is a Rich Text file. Open it and choose File, then Save As, then Word Document (.docx)',
+    gdoc:  'that is a Google Docs shortcut, not the document. In Google Docs choose File, then Download, then Microsoft Word (.docx)',
+  };
+  function storyExtOf(file){
+    const m = /\.([a-z0-9]+)$/i.exec(String((file && file.name) || '').trim());
+    const byName = m ? m[1].toLowerCase() : '';
+    if (STORY_FILE_EXTS.indexOf(byName) !== -1) return byName;
+    return STORY_FILE_MIME[String((file && file.type) || '').toLowerCase().split(';')[0].trim()] || '';
+  }
+  function storyFileRejection(file){
+    if (storyExtOf(file)) return null;
+    const m = /\.([a-z0-9]+)$/i.exec(String((file && file.name) || '').trim());
+    const known = UNSUPPORTED_STORY_FORMATS[m ? m[1].toLowerCase() : ''];
+    return known
+      ? 'We cannot read that story file: ' + known + ', then attach it again.'
+      : 'The story file needs to be a .docx, .pdf, .txt or .md document.';
+  }
   const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   let saveTimer = null;
   let submitted = false;
@@ -306,7 +343,8 @@
   }
 
   // ─── File dropzones ────────────────────────────────────────────────────
-  function attachDropzone(dropEl, inputEl, slot){
+  function attachDropzone(dropEl, inputEl, slot, opts){
+    opts = opts || {};
     const copy = $('[data-copy]', dropEl);
     const original = copy ? copy.innerHTML : '';
 
@@ -316,7 +354,7 @@
       const kb = Math.round(file.size / 1024);
       copy.innerHTML =
         `<b>${escapeHtml(file.name)}</b>` +
-        `<span class="meta">${(kb > 1024 ? (kb/1024).toFixed(1) + ' MB' : kb + ' KB')} &nbsp;·&nbsp; ${escapeHtml(file.type || 'image')}</span>`;
+        `<span class="meta">${(kb > 1024 ? (kb/1024).toFixed(1) + ' MB' : kb + ' KB')} &nbsp;·&nbsp; ${escapeHtml(opts.typeLabel ? opts.typeLabel(file) : (file.type || 'image'))}</span>`;
       // Add remove button if not already there
       if (!dropEl.querySelector('.remove')){
         const btn = document.createElement('button');
@@ -337,9 +375,14 @@
       const f = inputEl.files && inputEl.files[0];
       if (!f) return reset();
       if (f.size > MAX_FILE_BYTES){
-        alert('Photo is over 15 MB. Please pick a smaller image.');
+        alert((opts.label || 'Photo') + ' is over 15 MB. Please pick a smaller file.');
         return reset();
       }
+      // A document nothing downstream can read is refused HERE, with the fix
+      // named, rather than accepted now and bounced by the server after the
+      // family has filled in the rest of the form.
+      const bad = opts.reject ? opts.reject(f) : null;
+      if (bad){ alert(bad); return reset(); }
       show(f);
     });
     // drag visuals
@@ -434,6 +477,22 @@
   }
 
   attachDropzone($('#authorPhotoDrop'), $('#authorPhoto'), 'authorPhoto');
+
+  // The story's second carrier. Same dropzone, different accept list, and a
+  // refusal that tells the family how to produce a file we can read.
+  attachDropzone($('#storyFileDrop'), $('#storyFile'), 'storyFile', {
+    label: 'The story file',
+    reject: storyFileRejection,
+    typeLabel: (f) => (storyExtOf(f) || 'document').toUpperCase(),
+  });
+  // Attaching the manuscript answers the "paste your story" requirement, so
+  // clear its error and let the progress bar move; leaving the field lit red
+  // after a successful upload reads as the upload not having worked.
+  if ($('#storyFile')) $('#storyFile').addEventListener('change', () => {
+    const fieldEl = $('#story') && $('#story').closest('.field');
+    if (fieldEl && fileBlobs.storyFile) fieldEl.classList.remove('error');
+    updateProgress();
+  });
   attachMultiDropzone($('#authorArtworkDrop'), $('#authorArtwork'), $('#authorArtworkList'), 'authorArtwork');
 
   function escapeHtml(s){
@@ -455,6 +514,9 @@
         if (any) filled++;
       } else if (inp.type === 'checkbox'){
         if (inp.checked) filled++;
+      } else if (f.getAttribute('data-required-group') === 'story'){
+        // One requirement, two carriers: pasted text OR an attached document.
+        if (String(inp.value || '').trim() || fileBlobs.storyFile) filled++;
       } else {
         if (String(inp.value || '').trim()) filled++;
       }
@@ -522,7 +584,8 @@
     for (const f of $$('.field.error')) f.classList.remove('error');
 
     // Required text-ish fields (matches REQUIRED_STR in import-submissions.js)
-    const reqText = ['authorName','authorLocation','authorBio','storyTitle','story','inspiration'];
+    // 'story' is checked separately below: it has two carriers and needs one.
+    const reqText = ['authorName','authorLocation','authorBio','storyTitle','inspiration'];
     for (const name of reqText){
       const el = form.elements[name];
       const fieldEl = el && el.closest('.field');
@@ -549,7 +612,18 @@
     } else ok(ageField);
 
     // Story word count
-    if (storyEl && wordCount(storyEl.value) < MIN_STORY_WORDS){
+    // The story arrives pasted OR as a document, and needs exactly one of the
+    // two. Requiring the textarea would bounce every family who uploaded.
+    {
+      const el = form.elements['story'];
+      const fieldEl = el && el.closest('.field');
+      const typed = (el && el.value || '').trim();
+      if (!typed && !fileBlobs.storyFile) flag(fieldEl, 'story required (paste it, or attach a file)');
+      else ok(fieldEl);
+    }
+    // The 30-word floor catches an empty textarea. It says nothing about a
+    // document nobody has parsed yet, so an upload is exempt from it.
+    if (storyEl && !fileBlobs.storyFile && wordCount(storyEl.value) < MIN_STORY_WORDS){
       flag(storyEl.closest('.field'), `story too short (< ${MIN_STORY_WORDS} words)`);
     }
 
@@ -728,6 +802,9 @@
         const b = new FormData();
         b.append('payload', JSON.stringify(payload));
         if (fileBlobs.authorPhoto) b.append('authorPhoto', fileBlobs.authorPhoto);
+        // The manuscript, when the family uploaded one. The filename is preserved:
+        // its extension is what tells the server which parser the story needs.
+        if (fileBlobs.storyFile) b.append('storyFile', fileBlobs.storyFile, fileBlobs.storyFile.name);
         // Every drawing goes under the SAME field name; the server reads them
         // with form.getAll('authorArtwork'). Filenames are preserved so the
         // editor keeps provenance.

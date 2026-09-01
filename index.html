@@ -222,7 +222,7 @@
       <div>
         <div class="folio">Section &nbsp;<span class="roman">III.</span> Your story</div>
         <h1 class="section-title">Now the <em>important</em> bit.</h1>
-        <p class="lede">Paste it, type it, dictate it to a grown-up. Write it exactly how you want it printed. We don't restructure sentences, we don't swap your words for "better" ones.</p>
+        <p class="lede">Paste it, type it, dictate it to a grown-up, or upload the file you wrote it in. Write it exactly how you want it printed. We don't restructure sentences, we don't swap your words for "better" ones.</p>
 
         <div class="field" data-required>
           <label class="cap" for="storyTitle">Your story's title <span class="req">required</span></label>
@@ -230,13 +230,30 @@
           <div class="field-error">Even a working title is fine.</div>
         </div>
 
-        <div class="field" data-required>
-          <label class="cap" for="story">Paste or type your whole story <span class="req">required</span></label>
+        <div class="field" data-required data-required-group="story">
+          <label class="cap" for="story">Paste or type your whole story <span class="req">required, unless you upload</span></label>
           <div class="textwrap">
-            <textarea class="textarea story" id="story" name="story" required spellcheck="false" placeholder="Once upon a time, but not really…"></textarea>
+            <textarea class="textarea story" id="story" name="story" spellcheck="false" placeholder="Once upon a time, but not really…"></textarea>
             <div class="counter" id="storyCounter">Word count &nbsp;<b><span id="storyCount">0</span> / 30 minimum</b></div>
           </div>
-          <div class="field-error">Your story needs at least 30 words.</div>
+          <div class="field-error">Your story needs at least 30 words, or attach it as a file below.</div>
+        </div>
+
+        <!-- The other way in. A pasted story loses its italics, its bold and
+             the blank lines between scenes; the file keeps all three, so this
+             is the better path when the story already exists as a document. -->
+        <div class="field" id="storyFileField">
+          <label class="cap" for="storyFile">Or upload your story as a file <span class="req">instead of pasting</span></label>
+          <label class="drop" for="storyFile" id="storyFileDrop">
+            <div class="icon" data-icon="❧">❧</div>
+            <div class="copy" data-copy>
+              <b>Drop your story document or tap to choose</b>
+              <span class="meta">Word (.docx) is best &nbsp;·&nbsp; PDF, TXT and MD also fine &nbsp;·&nbsp; Up to 15 MB</span>
+            </div>
+            <input type="file" id="storyFile" name="storyFile" accept=".docx,.pdf,.txt,.md">
+          </label>
+          <p class="hint" id="storyFileHint">Working in Google Docs? Choose <b>File</b>, then <b>Download</b>, then <b>Microsoft Word (.docx)</b>, and send us that. A Word file keeps your italics, your bold and your paragraph breaks exactly as you set them, which pasting cannot do.</p>
+          <div class="field-error">We could not read that file. Send a .docx, .pdf, .txt or .md.</div>
         </div>
 
         <div class="row2" style="margin-top:36px">
@@ -615,6 +632,6 @@
 </footer>
 
 <script src="/consent-clauses.js?v=20260831-consent"></script>
-<script src="/intake.js?v=20260831-promo" defer></script>
+<script src="/intake.js?v=20260901storyfile01" defer></script>
 </body>
 </html>

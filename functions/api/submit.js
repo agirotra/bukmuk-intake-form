@@ -32,6 +32,53 @@ const MAX_STORY_WORDS = 10000;                 // hard ceiling on prose
 const MIN_STORY_WORDS = 30;                    // mirrors importer
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
+// A manuscript may arrive as a document instead of pasted prose. These are the
+// four formats the editor's ingest.js can actually parse (mammoth for .docx,
+// pdf-parse for .pdf, plain read for .txt / .md); the list is mirrored in the
+// editor repo at lib/story-file-types.js and the two must not drift.
+//
+// Match on the EXTENSION first and the MIME type second, never the MIME type
+// alone: Windows sends application/octet-stream for .docx and .md usually
+// arrives with an empty type, so a MIME-only gate would refuse real
+// manuscripts. MAX_STORY_WORDS cannot be applied to a document (the worker
+// does not parse it), so the size cap below is the only ceiling on an upload.
+const STORY_FILE_EXTS = ['docx', 'pdf', 'txt', 'md'];
+const STORY_FILE_MIME = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/pdf': 'pdf',
+  'text/plain': 'txt',
+  'text/markdown': 'md',
+  'text/x-markdown': 'md',
+};
+// Formats a family will plausibly attach that nothing downstream can read.
+// Refused with the fix rather than a generic "wrong type": a bounced upload
+// the parent cannot act on is a story we never receive.
+const UNSUPPORTED_STORY_FORMATS = {
+  doc:   "that is Word's old .doc format. Open it and choose File, then Save As, then Word Document (.docx)",
+  pages: 'that is an Apple Pages file. Open it and choose File, then Export To, then Word (.docx)',
+  odt:   'that is an OpenDocument file. Open it and choose File, then Save As, then Word Document (.docx)',
+  rtf:   'that is a Rich Text file. Open it and choose File, then Save As, then Word Document (.docx)',
+  gdoc:  'that is a Google Docs shortcut, not the document. In Google Docs choose File, then Download, then Microsoft Word (.docx)',
+};
+
+function storyExtOf(file){
+  const name = String((file && file.name) || '');
+  const m = /\.([a-z0-9]+)$/i.exec(name.trim());
+  const byName = m ? m[1].toLowerCase() : '';
+  if (STORY_FILE_EXTS.includes(byName)) return byName;
+  return STORY_FILE_MIME[String((file && file.type) || '').toLowerCase().split(';')[0].trim()] || '';
+}
+
+function storyFileRejection(file){
+  if (storyExtOf(file)) return null;
+  const name = String((file && file.name) || '');
+  const m = /\.([a-z0-9]+)$/i.exec(name.trim());
+  const known = UNSUPPORTED_STORY_FORMATS[m ? m[1].toLowerCase() : ''];
+  return known
+    ? `We cannot read that story file: ${known}, then attach it again.`
+    : 'The story file must be a .docx, .pdf, .txt or .md document.';
+}
+
 // Mirror of scripts/import-submissions.js FIELD_MAP (primary labels only).
 // Used for label → canonical-key lookup, validation, and consent detection.
 const FIELD_LABELS = {
@@ -41,6 +88,7 @@ const FIELD_LABELS = {
   authorBio:         "Tell us about you in a few lines, the way you'd tell a friend",
   storyTitle:        "Your story's title",
   story:             'Paste or type your whole story here. Write it exactly how you want it, we keep your voice.',
+  storyFile:         'Or upload your story as a file',
   inspiration:       'What gave you the idea for this story?',
   creditAs:          'How should we name you?',
   penName:           'Your pen name',
@@ -145,7 +193,7 @@ function wordCount(s){
 
 // Validate using the same contract as scripts/import-submissions.js
 // validateSubmission(). If this passes, the editor's import will pass.
-function validateOnServer(payload){
+function validateOnServer(payload, { hasStoryFile = false } = {}){
   const r = buildLookup(payload);
   const errors = [];
   const consentOnly = isConsentOnly(payload);
@@ -155,7 +203,9 @@ function validateOnServer(payload){
   const reqStr = consentOnly
     ? ['authorName','storyTitle',
        'guardianName','guardianRelation','guardianEmail','guardianPhone','guardianSignature','consentDate']
-    : ['authorName','authorLocation','authorBio','storyTitle','story','inspiration',
+    // 'story' is checked separately: the manuscript may be pasted prose OR an
+    // uploaded document, and requiring the textarea would bounce every upload.
+    : ['authorName','authorLocation','authorBio','storyTitle','inspiration',
        'guardianName','guardianRelation','guardianEmail','guardianPhone','guardianSignature','consentDate'];
   if (consentOnly && isChecked(r.consentLocation) && !String(r.authorLocation || '').trim()){
     errors.push('missing: authorLocation (city consent ticked)');
@@ -174,7 +224,12 @@ function validateOnServer(payload){
   if (!Number.isInteger(age) || age < minAge || age > maxAge){
     errors.push(`authorAge must be ${minAge}-${maxAge}`);
   }
-  if (!consentOnly && r.story && wordCount(r.story) < MIN_STORY_WORDS) errors.push(`story too short (< ${MIN_STORY_WORDS} words)`);
+  // One of the two carriers has to hold a story. A document is not parsed
+  // here, so its word count is checked downstream at ingest, not now.
+  if (!consentOnly && !String(r.story || '').trim() && !hasStoryFile){
+    errors.push('missing: story (paste the text or attach a file)');
+  }
+  if (!consentOnly && !hasStoryFile && r.story && wordCount(r.story) < MIN_STORY_WORDS) errors.push(`story too short (< ${MIN_STORY_WORDS} words)`);
   if (r.story && wordCount(r.story) > MAX_STORY_WORDS) errors.push(`story too long (> ${MAX_STORY_WORDS} words)`);
   if (r.guardianEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(r.guardianEmail))){
     errors.push('guardianEmail invalid');
@@ -331,6 +386,9 @@ function peek(payload){
     packageName:       get('packageName'),
     packageTotal:      get('packageTotal'),
     hasPhoto:     !!files.authorPhoto,
+    // Named in the notification so a story that arrived as a document is not
+    // read as an empty submission by whoever opens the email.
+    storyFile:    files.storyFile ? files.storyFile.name : null,
     artworkCount: Array.isArray(files.authorArtwork) ? files.authorArtwork.length
                 : files.authorArtwork ? 1 : 0,
   };
@@ -359,7 +417,11 @@ async function sendEditorNotification(env, p, meta){
     ``,
     `Author:       ${p.authorName || '(unknown)'}${p.authorAge ? ` (age ${p.authorAge})` : ''}`,
     `Story title:  ${p.storyTitle || '(untitled)'}`,
-    consentOnly ? null : `Word count:   ${wordCountStr(p.story)}`,
+    // A document submission has no pasted text, so the word count is 0. Print
+    // the filename instead of a zero that reads as an empty submission.
+    consentOnly ? null
+      : p.storyFile ? `Story file:   ${p.storyFile}${p.story ? ` (+ ${wordCountStr(p.story)} pasted)` : ''}`
+      : `Word count:   ${wordCountStr(p.story)}`,
     consentOnly && (p.packageName || p.packageTotal)
       ? `Package:      ${[p.packageName, p.packageTotal].filter(Boolean).join(' , ')}` : null,
     `Target book:  ${p.book || '(not specified)'}`,
@@ -575,8 +637,21 @@ export async function onRequestPost({ request, env, waitUntil }){
     payload.data.fields.push({ label: 'cohort', key: 'cohort', value: String(gate.cohort) });
   }
 
+  // 3c) The uploaded manuscript, read BEFORE validation: whether a story
+  // arrived at all now depends on it, and validateOnServer cannot see the
+  // multipart body.
+  const storyFile = form.get('storyFile');
+  const hasStoryFile = !!(storyFile && typeof storyFile !== 'string' && storyFile.size > 0);
+  if (hasStoryFile){
+    const reason = storyFileRejection(storyFile);
+    if (reason) return json({ error: reason }, 400);
+    if (storyFile.size > MAX_FILE_BYTES){
+      return json({ error: 'The story file is larger than 15 MB.' }, 400);
+    }
+  }
+
   // 4) Validate on the server side too
-  const v = validateOnServer(payload);
+  const v = validateOnServer(payload, { hasStoryFile });
   if (!v.ok){
     return json({ error: 'validation failed', details: v.errors }, 400);
   }
@@ -638,6 +713,12 @@ export async function onRequestPost({ request, env, waitUntil }){
     if (photoFile && typeof photoFile !== 'string'){
       meta.files.authorPhoto = await putObject(`${id}/authorPhoto.${extOf(photoFile)}`, photoFile, 'authorPhoto');
     }
+    // The manuscript, when it came as a document. Stored under its real
+    // extension so the editor lands it at input/<slug>.<ext> and ingest.js
+    // picks the right parser; an extension-less object would be unreadable.
+    if (hasStoryFile){
+      meta.files.storyFile = await putObject(`${id}/story.${storyExtOf(storyFile)}`, storyFile, 'storyFile');
+    }
     // Drawings: one object each. The FIRST keeps the historical name
     // authorArtwork.<ext>; the rest are authorArtwork-2, -3, … so the set is
     // stable, ordered, and legible in the bucket. meta.files.authorArtwork is
@@ -657,6 +738,13 @@ export async function onRequestPost({ request, env, waitUntil }){
         label: 'A clear photo of you (as big as you have it)',
         key:   'authorPhoto',
         value: { url: `r2://${meta.files.authorPhoto.key}`, name: meta.files.authorPhoto.name },
+      });
+    }
+    if (meta.files.storyFile){
+      payload.data.fields.push({
+        label: 'Or upload your story as a file',
+        key:   'storyFile',
+        value: { url: `r2://${meta.files.storyFile.key}`, name: meta.files.storyFile.name },
       });
     }
     if (meta.files.authorArtwork.length){
