@@ -1,20 +1,29 @@
 # Cloudflare Pages redirect rules.
 #
-# This repository is public AND its files are served from the live site, so
-# anything committed here is world-readable at a stable URL. The Node test
-# suite and the README are development files with no reason to exist on a form
-# that families open: /test/consent-form.test.mjs served a real child's name,
-# his guardian's name, her email, his town and his book title until 2026-09-01.
+# VERIFIED 2026-09-01, BY CURL AFTER A REAL DEPLOY: a _redirects rule CANNOT
+# hide a file that exists. Pages serves the static asset first and the rule is
+# never reached. The rules below were tried and did nothing:
 #
-# The names are gone, but the surface should not be here either. Fewer files
-# published is fewer files to get this wrong in again.
+#     /test/*      /404 404      <- still returned the file, 200
+#     /README.md   /404 404      <- still returned the file, 200
 #
-# Caveat worth knowing if you change this: Pages applies redirects to requests
-# that do not match a static asset, so a rule cannot always shadow a file that
-# physically exists. If /test/* still returns the file after a deploy, the
-# reliable fix is to stop publishing it: a Pages build command of
-# `rm -rf test README.md`, or moving the served assets into their own output
-# directory. Verify with curl after deploying, never by reading this file.
-
-/test/*      /404 404
-/README.md   /404 404
+# So do not add a rule here expecting it to unpublish anything.
+#
+# WHAT IS ACTUALLY SERVED, because Pages publishes the repository root:
+# everything tracked except functions/ and this file. That currently includes
+# README.md, .gitignore, scripts/setup-cloudflare.js and both test files. The
+# tests carried a real child's name, his guardian's name and email, his town
+# and his book title until 2026-09-01; those are scrubbed, but the surface
+# remains and none of it belongs on a form families open.
+#
+# THE FIX IS TO NOT PUBLISH THEM, and it is a Pages project setting, not a file
+# in this repo:
+#
+#     Build command:            rm -rf test scripts README.md .gitignore
+#     Build output directory:   /            (unchanged)
+#
+# or move index.html, consent.html, the js/css and assets/ into their own
+# directory and point the output directory at it.
+#
+# Whatever you choose, confirm it with curl against the deployed site. A rule
+# in this file is not evidence, which is the whole lesson above.
