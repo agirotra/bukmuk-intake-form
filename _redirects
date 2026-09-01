@@ -1,0 +1,20 @@
+# Cloudflare Pages redirect rules.
+#
+# This repository is public AND its files are served from the live site, so
+# anything committed here is world-readable at a stable URL. The Node test
+# suite and the README are development files with no reason to exist on a form
+# that families open: /test/consent-form.test.mjs served a real child's name,
+# his guardian's name, her email, his town and his book title until 2026-09-01.
+#
+# The names are gone, but the surface should not be here either. Fewer files
+# published is fewer files to get this wrong in again.
+#
+# Caveat worth knowing if you change this: Pages applies redirects to requests
+# that do not match a static asset, so a rule cannot always shadow a file that
+# physically exists. If /test/* still returns the file after a deploy, the
+# reliable fix is to stop publishing it: a Pages build command of
+# `rm -rf test README.md`, or moving the served assets into their own output
+# directory. Verify with curl after deploying, never by reading this file.
+
+/test/*      /404 404
+/README.md   /404 404
