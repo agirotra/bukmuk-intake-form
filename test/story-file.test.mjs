@@ -64,16 +64,16 @@ const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.doc
 
 function fixture(){
   const v = {
-    authorName: 'Veer Sharma', authorAge: '9', authorLocation: 'Delhi',
-    authorBio: 'Veer is nine and likes sharks.',
-    storyTitle: 'The Sea of Gold', story: STORY_30_WORDS,
-    inspiration: 'A map I found in a book.',
+    authorName: 'Test Author', authorAge: '9', authorLocation: 'Testville',
+    authorBio: 'A fixture bio for the test harness.',
+    storyTitle: 'The Fixture Story', story: STORY_30_WORDS,
+    inspiration: 'A fixture value for the test harness.',
     creditAs: 'My full name', childAssent: 'Yes',
-    guardianName: 'Monimai Das', guardianRelation: 'Mother',
+    guardianName: 'Test Guardian', guardianRelation: 'Mother',
     guardianEmail: 'parent@example.in', guardianPhone: '+91 9812345678',
-    guardianSignature: 'Monimai Das', consentDate: '2026-09-01',
+    guardianSignature: 'Test Guardian', consentDate: '2026-09-01',
     consentPublish: L.consentPublish,
-    book: 'sea-of-gold',
+    book: 'fixture-book',
   };
   return { data: { fields: Object.entries(v).map(([k, value]) => ({ label: L[k], key: k, value })) } };
 }
@@ -112,14 +112,14 @@ function storedField(r, key){
 describe('story as an uploaded document , server contract', () => {
 
   test('an upload with NO pasted text is accepted', async () => {
-    const r = await post(drop(clone(), 'story'), { name: 'Sea of Gold.docx', type: DOCX });
+    const r = await post(drop(clone(), 'story'), { name: 'Fixture Story.docx', type: DOCX });
     assert.equal(r.status, 200, JSON.stringify(r.body));
     assert.equal(r.body.kind, 'submission');
     assert.ok(!r.puts[0].key.startsWith('consent/'), 'a story must file at the bucket root');
   });
 
   test('the document is stored under its real extension', async () => {
-    const r = await post(drop(clone(), 'story'), { name: 'Sea of Gold.docx', type: DOCX });
+    const r = await post(drop(clone(), 'story'), { name: 'Fixture Story.docx', type: DOCX });
     assert.equal(r.filePuts.length, 1, 'the manuscript was not written to the files bucket');
     assert.match(r.filePuts[0].key, /\/story\.docx$/,
       `stored at "${r.filePuts[0].key}"; the editor lands this at input/<slug>.<ext> and the ` +
@@ -127,12 +127,12 @@ describe('story as an uploaded document , server contract', () => {
   });
 
   test('the stored payload carries the reference the importer looks for', async () => {
-    const r = await post(drop(clone(), 'story'), { name: 'Sea of Gold.docx', type: DOCX });
+    const r = await post(drop(clone(), 'story'), { name: 'Fixture Story.docx', type: DOCX });
     const ref = storedField(r, 'storyFile');
     assert.ok(ref, 'no storyFile field in the stored payload; the manuscript would be unreachable');
     assert.equal(ref.label, L.storyFile, 'the label is how the importer matches the field');
     assert.match(ref.value.url, /^r2:\/\/.+\/story\.docx$/, JSON.stringify(ref.value));
-    assert.equal(ref.value.name, 'Sea of Gold.docx', 'the family\'s own filename is kept');
+    assert.equal(ref.value.name, 'Fixture Story.docx', 'the family\'s own filename is kept');
   });
 
   // The gate matches on the extension first for exactly this reason.
