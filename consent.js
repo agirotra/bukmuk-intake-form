@@ -77,7 +77,7 @@
 
   // ── Prefill from the link ──────────────────────────────────────────────
   // The editor sends one tap on WhatsApp, e.g.
-  //   /consent?child=Avish%20Jain&age=6&title=Mageton&book=mageton-avish
+  //   /consent?child=Ananya%20Sharma&age=11&title=The%20Door%20in%20the%20Forest&book=example-book
   //     &package=Signature%20Paperback&total=%E2%82%B99%2C500&guardian=Neha%20Jain
   //     &email=neha@example.in&phone=%2B919812345678&code=<workshop code>
   // Everything stays editable; the parent corrects anything we got wrong.

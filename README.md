@@ -121,17 +121,17 @@ anything we got wrong.
 
 ```
 https://submit.bukmukpublishing.com/consent
-  ?child=Avish%20Jain
+  ?child=Ananya%20Sharma
   &age=6
-  &title=Mageton%27s%20Big%20Adventure
-  &book=mageton-avish
+  &title=The%20Door%20in%20the%20Forest
+  &book=example-book
   &package=Signature%20Paperback
   &total=INR%209%2C500
   &guardian=Neha%20Jain
   &relation=Mother
   &email=neha%40example.in
   &phone=%2B919812345678
-  &city=Haridwar
+  &city=Delhi
   &channel=whatsapp
   &code=<workshop code, if the gate is on>
 ```
@@ -143,10 +143,10 @@ and lands in the consent ledger. It defaults to `direct`.
 
 The authors' intake is a 7 to 15 programme and holds that line. This form
 does not: it is signed by families we are already working with, and some of
-those authors are younger. Avish Jain was 6 when he wrote *Mageton's Big
-Adventure*, and a 7-15 gate here would have refused his own mother's
-consent. Consent mode accepts 1 to 17. The only thing it needs to be sure
-of is that the author is a minor, which is why a guardian is signing at all.
+those authors are younger. One of our authors was 6 when he wrote his book,
+and a 7-15 gate here would have refused his own mother's consent. Consent
+mode accepts 1 to 17. The only thing it needs to be sure of is that the
+author is a minor, which is why a guardian is signing at all.
 
 ### Getting it into the editor
 
@@ -155,8 +155,8 @@ npx wrangler r2 object list bukmuk-intake-submissions --prefix consent/
 npx wrangler r2 object get bukmuk-intake-submissions/consent/<uuid>.json > /tmp/consent.json
 
 # in bukmuk-editor
-node scripts/import-consent.js --book mageton-avish --file /tmp/consent.json --dry-run
-node scripts/import-consent.js --book mageton-avish --file /tmp/consent.json
+node scripts/import-consent.js --book example-book --file /tmp/consent.json --dry-run
+node scripts/import-consent.js --book example-book --file /tmp/consent.json
 ```
 
 It attaches the signature to the slug it belongs to, merging into any

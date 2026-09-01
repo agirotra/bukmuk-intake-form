@@ -215,9 +215,10 @@ function validateOnServer(payload, { hasStoryFile = false } = {}){
   }
   // The authors' intake is a 7 to 15 programme, so the full form holds that
   // line. The consent form does not: it is signed by families we are already
-  // working with, and some of those authors are younger. Avish Jain was 6 when
-  // Mageton's Big Adventure was written, and a 7-15 gate here would have
-  // refused his own mother's consent. The only thing consent mode needs to be
+  // working with, and some of those authors are younger. One of our authors
+  // was 6 when his book was written, and a 7-15 gate here would have refused
+  // his own mother's consent. (Named in the private editor repo, not here:
+  // this repository is public and its files are served from the live site.) The only thing consent mode needs to be
   // sure of is that the author is a minor, which is why a guardian is signing.
   const age = parseInt(String(r.authorAge || ''), 10);
   const [minAge, maxAge] = consentOnly ? [1, 17] : [7, 15];

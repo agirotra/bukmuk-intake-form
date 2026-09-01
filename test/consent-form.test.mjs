@@ -71,11 +71,11 @@ const L = {
 
 function fixture(){
   const v = {
-    authorName: 'Avish Jain', authorAge: '9', storyTitle: "Mageton's Big Adventure",
-    authorLocation: 'Haridwar', creditAs: 'My full name', childAssent: 'Yes',
-    guardianName: 'Neha Jain', guardianRelation: 'Mother',
-    guardianEmail: 'neha@example.in', guardianPhone: '+91 9812345678',
-    guardianSignature: 'Neha Jain', consentDate: '2026-08-31',
+    authorName: 'Test Author', authorAge: '9', storyTitle: 'The Fixture Story',
+    authorLocation: 'Testville', creditAs: 'My full name', childAssent: 'Yes',
+    guardianName: 'Test Guardian', guardianRelation: 'Mother',
+    guardianEmail: 'guardian@example.com', guardianPhone: '+91 9812345678',
+    guardianSignature: 'Test Guardian', consentDate: '2026-08-31',
     consentPublish: L.consentPublish,
     consentPhoto: L.consentPhoto,
     consentLocation: L.consentLocation,
@@ -83,7 +83,7 @@ function fixture(){
     agreementVersion: CLAUSES.AGREEMENT_VERSION,
     agreementSummary: CLAUSES.summaryText(),
     agreementUrl: CLAUSES.AGREEMENT_URL,
-    formKind: 'consent', book: 'mageton-avish', channel: 'whatsapp',
+    formKind: 'consent', book: 'fixture-book', channel: 'whatsapp',
   };
   return {
     data: { fields: Object.entries(v).map(([k, value]) => ({ label: L[k], key: k, value })) },
@@ -142,7 +142,7 @@ describe('consent form , server contract', () => {
   });
 
   test('a young author is not turned away by the programme age floor', async () => {
-    // Avish Jain was 6 when he wrote Mageton's Big Adventure. The authors'
+    // One of our authors was 6 when he wrote his book. The authors'
     // intake is a 7 to 15 programme; this form is signed by families we are
     // already working with, so it must not refuse his mother's consent.
     const six = await post(set(clone(), 'authorAge', '6'));
