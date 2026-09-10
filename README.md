@@ -141,12 +141,17 @@ and lands in the consent ledger. It defaults to `direct`.
 
 ### Age
 
-The authors' intake is a 7 to 15 programme and holds that line. This form
-does not: it is signed by families we are already working with, and some of
-those authors are younger. One of our authors was 6 when he wrote his book,
-and a 7-15 gate here would have refused his own mother's consent. Consent
-mode accepts 1 to 17. The only thing it needs to be sure of is that the
-author is a minor, which is why a guardian is signing at all.
+The authors' intake is a 6 to 17 programme and holds that line (it was 7 to
+15 until 2026-09-10). This form is looser: it is signed by families we are
+already working with, so consent mode accepts 1 to 17. The only thing it
+needs to be sure of is that the author is a minor, which is why a guardian
+is signing at all.
+
+The editor's importer (`scripts/import-submissions.js` in `bukmuk-editor`)
+validates the same 6 to 17 range and maps the same Q&A brackets (early 6 to
+9, mid 10 to 12, upper 13 to 17). Change one and you must change the other,
+or a submission this form accepts is refused, or loses its answers, at
+import.
 
 ### Getting it into the editor
 
@@ -440,7 +445,7 @@ the editorial commitment.
 - All form fields have explicit `<label>` associations; required fields
   carry a visible `required` tag and the field's error text shows
   inline on validation failure.
-- The age wheel (7 to 15) is a styled radio group with full keyboard
+- The age wheel (6 to 17) is a styled radio group with full keyboard
   support; focus rings are honoured.
 - The consent checkboxes are large click/tap targets (28px box + the
   entire label text is clickable).

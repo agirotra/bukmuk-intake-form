@@ -114,9 +114,11 @@
   }
   function ageGroup(age){
     const n = parseInt(age, 10);
-    if (n >= 7  && n <= 9)  return 'early';
+    // Every age the form accepts must land in a bracket: a null here hides
+    // every Q&A set, so the child sees no questions and says nothing.
+    if (n >= 6  && n <= 9)  return 'early';
     if (n >= 10 && n <= 12) return 'mid';
-    if (n >= 13 && n <= 15) return 'upper';
+    if (n >= 13 && n <= 17) return 'upper';
     return null;
   }
 
@@ -607,8 +609,8 @@
     const ageEl = $$('input[name=authorAge]:checked')[0];
     const ageField = $('[data-required] .agewheel') && $('[data-required] .agewheel').closest('.field');
     if (!ageEl){ flag(ageField, 'authorAge required'); }
-    else if (parseInt(ageEl.value, 10) < 7 || parseInt(ageEl.value, 10) > 15){
-      flag(ageField, 'authorAge must be 7-15');
+    else if (parseInt(ageEl.value, 10) < 6 || parseInt(ageEl.value, 10) > 17){
+      flag(ageField, 'authorAge must be 6-17');
     } else ok(ageField);
 
     // Story word count

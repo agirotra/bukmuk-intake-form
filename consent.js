@@ -218,9 +218,9 @@
       if (!String(el.value || '').trim()) flag(el); else ok(el);
     });
 
-    // 1 to 17, not the intake form's 7 to 15: this form is signed by families
-    // we already work with, and some of those authors are younger than the
-    // programme's floor. See the note in functions/api/submit.js.
+    // 1 to 17, looser than the intake form's 6 to 17: this form is signed by
+    // families we already work with, and all it needs to be sure of is that
+    // the author is a minor. See the note in functions/api/submit.js.
     var ageEl = form.elements['authorAge'];
     var age = parseInt(String(ageEl && ageEl.value || ''), 10);
     if (!(age >= 1 && age <= 17)) flag(ageEl, 'Their age in years.'); else ok(ageEl);

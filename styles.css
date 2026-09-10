@@ -279,7 +279,7 @@ h1.section-title em{
 .counter b{ color: var(--ink); font-weight: 500 }
 .counter.ok b{ background: var(--lime); padding: 0 6px; color: var(--ink) }
 
-/* age wheel: 7-15 chips */
+/* age wheel: 6 to 17 chips */
 .agewheel{ display:flex; flex-wrap:wrap; gap: 8px; position: relative }
 .agewheel input{ position:absolute; opacity:0; pointer-events:none }
 .agewheel label{

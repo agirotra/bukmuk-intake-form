@@ -143,8 +143,8 @@ describe('consent form , server contract', () => {
 
   test('a young author is not turned away by the programme age floor', async () => {
     // One of our authors was 6 when he wrote his book. The authors'
-    // intake is a 7 to 15 programme; this form is signed by families we are
-    // already working with, so it must not refuse his mother's consent.
+    // intake is a 6 to 17 programme, and this form is looser still (1 to 17):
+    // it is signed by families we are already working with.
     const six = await post(set(clone(), 'authorAge', '6'));
     assert.equal(six.status, 200, JSON.stringify(six.body));
 
