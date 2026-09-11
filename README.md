@@ -6,7 +6,7 @@
 
 | Page | Who it is for | What it collects |
 |---|---|---|
-| `/` (`index.html`) | A child submitting a story through the authors' intake | The whole story, the author, the drawings, and the guardian's consent (folio IX) |
+| `/` (`index.html`) | A child submitting a story through the authors' intake | The whole story, the author, the drawings, and the guardian's consent **and** acceptance of the Young Author Agreement (folio IX) |
 | `/consent` (`consent.html`) | A family whose story reached us on WhatsApp, by email or in a call | Publication consent **and** acceptance of the Young Author Agreement. No story: that arrived by another route |
 
 Both post to the same `/api/submit` Function. The short form sends
@@ -172,11 +172,14 @@ exactly one story, it stops and prints the candidates.
 ### Tests
 
 ```bash
-node --test test/consent-form.test.mjs
+node --test test/*.mjs
 ```
 
 Drives the real Cloudflare Function with a payload built from the real
 clause module, so the fixture cannot drift from what a browser sends.
+`test/story-form-agreement.test.mjs` covers the agreement on the story form
+(added 2026-09-11, so one form carries both halves and no family is sent the
+consent form as a second).
 
 ---
 

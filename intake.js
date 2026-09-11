@@ -67,6 +67,14 @@
     // comes from consent-clauses.js, the single source of truth.
     consentPromo:      (window.BUKMUK_CONSENT && window.BUKMUK_CONSENT.LABELS.consentPromo)
                        || "I allow the author's photo and name to be used to promote the book, on our website, on social media and on the shop listing.",
+    // The Young Author Agreement, asked here too since 2026-09-11 so a family
+    // signs ONE form and is never sent a second. Same keys and labels as
+    // consent.js; the accept text comes from consent-clauses.js.
+    agreementAccepted: (window.BUKMUK_CONSENT && window.BUKMUK_CONSENT.LABELS.agreementAccepted)
+                       || 'I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.',
+    agreementVersion:  'Agreement version',
+    agreementSummary:  'Agreement summary as shown',
+    agreementUrl:      'Full agreement URL',
     guardianSignature: 'Type your full name as a signature',
     consentDate:       'Date',
 
@@ -524,7 +532,7 @@
       }
     }
     // also count guardian required consents (they're checkboxes, not data-required)
-    const consents = ['consentPublish'];
+    const consents = ['consentPublish', 'agreementAccepted'];
     const consentReq = consents.length;
     const consentFilled = consents.filter(n => {
       const el = guardianForm.elements[n]; return el && el.checked;
@@ -542,6 +550,25 @@
   form.addEventListener('change', () => { scheduleSave(); onAgeChange(); onCreditAsChange(); onCreditExamplesChange(); syncRadioCards(); });
   guardianForm.addEventListener('input',  scheduleSave);
   guardianForm.addEventListener('change', () => { scheduleSave(); syncRadioCards(); });
+
+  // Hide the "scroll the box" hint once the agreement's terms have been read
+  // to the end (the same behaviour as consent.js). The list is filled by
+  // consent-clauses.js on DOMContentLoaded, after this deferred script runs,
+  // so the check is repeated once the terms are in.
+  const termsBox = $('.terms', guardianForm);
+  const scrollHint = $('#scrollHint');
+  if (termsBox && scrollHint){
+    const checkScrolled = () => {
+      const atEnd = termsBox.scrollTop + termsBox.clientHeight >= termsBox.scrollHeight - 24;
+      const noScroll = termsBox.scrollHeight <= termsBox.clientHeight + 4;
+      scrollHint.style.visibility = (atEnd || noScroll) ? 'hidden' : 'visible';
+    };
+    termsBox.addEventListener('scroll', checkScrolled);
+    window.addEventListener('resize', checkScrolled);
+    document.addEventListener('DOMContentLoaded', checkScrolled);
+    window.addEventListener('load', checkScrolled);
+    checkScrolled();
+  }
 
   // Restore from localStorage on load
   restore();
@@ -673,12 +700,19 @@
     // though `document.querySelector('input[name=consentPublish]')` returns
     // the live checked element. Fresh querySelector is the immune path.
     // (Verified 2026-05-22: same bug observed at every UI submit.)
-    for (const name of ['consentPublish']){
+    // agreementAccepted joined 2026-09-11, same fresh-querySelector path.
+    for (const name of ['consentPublish', 'agreementAccepted']){
       const el = document.querySelector(`input[name="${name}"]`);
       if (!el || !el.checked){
         errors.push(`${name} not ticked`);
         flag(el && el.closest('.field'), `${name} not ticked`);  // also flag visually
       }
+    }
+    // The agreement's terms come from consent-clauses.js. If that file did not
+    // load, the guardian was shown a tick with no terms under it, and a tick on
+    // terms nobody saw is not an acceptance. Refuse rather than send it.
+    if (!window.BUKMUK_CONSENT){
+      errors.push('agreement terms did not load; reload the page');
     }
 
     return { ok: errors.length === 0, errors, firstBadEl };
@@ -732,6 +766,22 @@
     for (const key of ['consentPublish','consentPhoto','consentLocation','consentPromo']){
       const el = guardianForm.elements[key];
       if (el && el.checked) add(key, LABELS[key]);
+    }
+
+    // The Young Author Agreement (2026-09-11), the same fields consent.js
+    // sends. Fresh querySelector for the tick, for the reason given in
+    // validate(). The version and the summary go with every submission from
+    // this page, ticked or not: the server reads agreementVersion as "this
+    // page showed the agreement" and then requires the tick. The summary is
+    // the text the page rendered, stored verbatim, because a pointer to
+    // wording we can edit later is not evidence of what was on screen.
+    const agreeEl = document.querySelector('input[name="agreementAccepted"]');
+    if (agreeEl && agreeEl.checked) add('agreementAccepted', LABELS.agreementAccepted);
+    const CLAUSES = window.BUKMUK_CONSENT;
+    if (CLAUSES){
+      add('agreementVersion', CLAUSES.AGREEMENT_VERSION);
+      add('agreementSummary', CLAUSES.summaryText());
+      add('agreementUrl', CLAUSES.AGREEMENT_URL);
     }
 
     // hidden fields (book, channel, cohort, facilitator)

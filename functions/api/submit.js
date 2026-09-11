@@ -108,8 +108,11 @@ const FIELD_LABELS = {
   consentDate:       'Date',
   book:              'book',
 
-  // consent.html only , the short consent + agreement form for stories that
-  // reached us on WhatsApp, by email or on a call. See CONSENT-ONLY MODE below.
+  // The Young Author Agreement. consent.html always sends these; the full
+  // story form sends them too since 2026-09-11, so one form carries both
+  // halves. packageName, packageTotal and formKind are consent.html only, the
+  // short consent + agreement form for stories that reached us on WhatsApp, by
+  // email or on a call. See CONSENT-ONLY MODE below.
   agreementAccepted: 'I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.',
   agreementVersion:  'Agreement version',
   agreementSummary:  'Agreement summary as shown',
@@ -250,7 +253,17 @@ function validateOnServer(payload, { hasStoryFile = false } = {}){
   // The commercial half. A consent-form signature that does not accept the
   // agreement is not a signature we can act on, so it is a hard failure and
   // never a warning: the whole point of the form is that both are captured.
-  if (consentOnly){
+  //
+  // The story form asks it too since 2026-09-11, and its page always sends
+  // agreementVersion with the terms, so the same three checks apply whenever
+  // that page showed it. A story page opened BEFORE the change never showed
+  // the agreement and sends none of it; refusing that would lose a family's
+  // whole story over a question they were never asked, so it passes and its
+  // ledger simply has no agreement block, like every record before it.
+  const askedAgreement = consentOnly
+    || !!String(r.agreementVersion || '').trim()
+    || isChecked(r.agreementAccepted);
+  if (askedAgreement){
     if (!isChecked(r.agreementAccepted)) errors.push('agreementAccepted not ticked');
     if (!String(r.agreementVersion || '').trim()) errors.push('missing: agreementVersion');
     if (!String(r.agreementSummary || '').trim()) errors.push('missing: agreementSummary');
@@ -447,7 +460,11 @@ async function sendEditorNotification(env, p, meta){
     `Promo use:    ${yesNo(p.consentPromo)}`,
     `Child assent: ${p.childAssent || '(none)'}`,
     `Credit as:    ${p.creditAs || '(none)'}${p.penName ? ` , pen name: ${p.penName}` : ''}`,
-    consentOnly ? `Agreement:    ${yesNo(p.agreementAccepted)} (${p.agreementVersion || 'no version'})` : null,
+    // Both forms since 2026-09-11; a story page opened before then sends no
+    // agreement fields, and saying "Agreement: no" for it would read as a
+    // refusal nobody gave.
+    (consentOnly || p.agreementVersion || isChecked(p.agreementAccepted))
+      ? `Agreement:    ${yesNo(p.agreementAccepted)} (${p.agreementVersion || 'no version'})` : null,
     ``,
     `, Author details ,`,
     `Location:     ${p.authorLocation || '(none)'}`,
@@ -551,7 +568,20 @@ async function sendParentConfirmation(env, p, meta){
     `  ,  Print the author's city${p.authorLocation ? ` (${p.authorLocation})` : ''}: ${yesNo(p.consentLocation)}`,
     `  ,  Use the author's photo and name to promote the book: ${yesNo(p.consentPromo)}`,
     `  ,  ${child} wants the story in the book: ${p.childAssent || '(not answered)'}`,
+    // The agreement, when the page asked it (the story form since 2026-09-11).
+    // This email is the family's only copy of what they signed, so it quotes
+    // the terms as they appeared on screen, the same as the consent form's.
+    (p.agreementVersion || isChecked(p.agreementAccepted))
+      ? `  ,  Bukmuk Young Author Agreement accepted: ${yesNo(p.agreementAccepted)}${p.agreementVersion ? ` (version ${p.agreementVersion})` : ''}`
+      : null,
     `  ,  Signed by ${p.guardianSignature || p.guardianName || 'you'}${p.consentDate ? ` on ${p.consentDate}` : ''}.`,
+    ...(isChecked(p.agreementAccepted) && p.agreementSummary ? [
+      ``,
+      `THE AGREEMENT IN SHORT, AS IT APPEARED ON THE PAGE YOU SIGNED`,
+      ``,
+      p.agreementSummary,
+      ...(p.agreementUrl ? [``, `The full agreement, which is what you accepted, is at ${p.agreementUrl}`] : []),
+    ] : []),
     ``,
     `What happens next:`,
     `  ,  Within a fortnight, a real editor will read the story and write back to you and ${child}. We'll share what we'd like to gently edit and ask before changing anything that matters.`,
@@ -564,7 +594,7 @@ async function sendParentConfirmation(env, p, meta){
     ``,
     `, Bukmuk Editorial Team`,
     `  bukmukpublishing.com`,
-  ].join('\n');
+  ].filter(v => v !== null).join('\n');
 
   await sendSesEmail({
     env,

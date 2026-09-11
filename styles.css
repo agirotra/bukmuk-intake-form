@@ -584,6 +584,46 @@ h1.section-title em{
   margin-left: 6px;
   vertical-align: 2px;
 }
+
+/* ── The Young Author Agreement, in short ─────────────────────────────────
+   Shared by both forms since 2026-09-11 (it lived in consent.html alone). */
+.terms{
+  background: rgba(255,255,255,.5);
+  border: 1px solid var(--ledger-rule);
+  padding: 22px 24px 22px 12px;
+  margin: 20px 0 4px;
+  max-height: 340px; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* On a phone a nested scroll box fights the page scroll and hides eleven of
+   the fourteen terms behind a gesture nobody makes. Let the list flow. */
+@media (max-width: 720px){
+  .terms{ max-height: none; overflow-y: visible }
+}
+.terms ol{
+  margin: 0; padding-left: 26px;
+  font-size: 16.5px; line-height: 1.6; color: var(--ink);
+}
+.terms li{ margin: 0 0 13px; padding-left: 4px }
+.terms li:last-child{ margin-bottom: 0 }
+.terms li::marker{
+  font-family: var(--mono); font-size: 13px; color: var(--blue);
+}
+.terms-head{
+  display:flex; justify-content: space-between; align-items: baseline;
+  gap: 14px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-soft);
+  margin-top: 28px;
+}
+.terms-head a{ color: var(--blue); text-transform: none; letter-spacing: 0; font-size: 13px }
+.scrollhint{
+  font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-soft);
+  margin: 8px 0 0; text-align: right;
+}
+.consent.commercial{ border-top: 2px solid var(--blue) }
+
 .sig-row{
   display:grid; grid-template-columns: 2fr 1fr; gap: 36px;
   margin-top: 24px;

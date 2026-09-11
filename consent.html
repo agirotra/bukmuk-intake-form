@@ -10,45 +10,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260831-code01">
+<link rel="stylesheet" href="/styles.css?v=20260911-agreement">
 <style>
-  /* Page-local only. The shared stylesheet drives the live intake form; this
-     form adds one component (the short-terms ledger) and nothing else. */
-  .terms{
-    background: rgba(255,255,255,.5);
-    border: 1px solid var(--ledger-rule);
-    padding: 22px 24px 22px 12px;
-    margin: 20px 0 4px;
-    max-height: 340px; overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  /* On a phone a nested scroll box fights the page scroll and hides eleven of
-     the fourteen terms behind a gesture nobody makes. Let the list flow. */
-  @media (max-width: 720px){
-    .terms{ max-height: none; overflow-y: visible }
-  }
-  .terms ol{
-    margin: 0; padding-left: 26px;
-    font-size: 16.5px; line-height: 1.6; color: var(--ink);
-  }
-  .terms li{ margin: 0 0 13px; padding-left: 4px }
-  .terms li:last-child{ margin-bottom: 0 }
-  .terms li::marker{
-    font-family: var(--mono); font-size: 13px; color: var(--blue);
-  }
-  .terms-head{
-    display:flex; justify-content: space-between; align-items: baseline;
-    gap: 14px; flex-wrap: wrap;
-    font-family: var(--mono); font-size: 11.5px; letter-spacing: .09em;
-    text-transform: uppercase; color: var(--ink-soft);
-    margin-top: 28px;
-  }
-  .terms-head a{ color: var(--blue); text-transform: none; letter-spacing: 0; font-size: 13px }
-  .scrollhint{
-    font-family: var(--mono); font-size: 11px; letter-spacing: .07em;
-    text-transform: uppercase; color: var(--ink-soft);
-    margin: 8px 0 0; text-align: right;
-  }
+  /* Page-local only. The short-terms ledger (.terms, .terms-head, .scrollhint,
+     .consent.commercial) moved to styles.css on 2026-09-11, when the story
+     form started showing the agreement too. */
   .package-line{
     font-family: var(--mono); font-size: 12.5px; letter-spacing: .04em;
     color: var(--ink-soft); border-left: 2px solid var(--lime-deep);

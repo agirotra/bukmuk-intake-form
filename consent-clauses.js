@@ -4,7 +4,8 @@
  * Agreement live HERE and nowhere else on the client. Both pages load this
  * file BEFORE their own script:
  *
- *   index.html   , the full authors' intake (folio IX guardian sign-off)
+ *   index.html   , the full authors' intake (folio IX guardian sign-off:
+ *                  consent ticks and, since 2026-09-11, the agreement)
  *   consent.html , the short consent + agreement form, for stories that
  *                  reached us by WhatsApp, email or a call
  *
@@ -54,8 +55,12 @@
     // capture less than a conversation does.
     consentPromo: "I allow the author's photo and name to be used to promote the book, on our website, on social media and on the shop listing.",
 
-    // Commercial acceptance. New with consent.html; the full intake form does
-    // not show it (a workshop submission is not a paid package).
+    // Commercial acceptance. Both forms ask it: consent.html since it was
+    // built, the full story form since 2026-09-11. It was first kept off the
+    // story form on the reasoning that "a workshop submission is not a paid
+    // package", but the agreement itself sets out workshop seat refunds, and
+    // every family, workshop or direct, is now asked to sign it. Asking it on
+    // the form they already fill is what lets one form be enough.
     agreementAccepted: 'I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.',
   };
 

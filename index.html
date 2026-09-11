@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260710-multiart">
+<link rel="stylesheet" href="/styles.css?v=20260911-agreement">
 </head>
 <body>
 
@@ -559,6 +559,34 @@
             </label>
           </div>
 
+          <!-- ── The Young Author Agreement ─────────────────────────────────
+               On this form since 2026-09-11, so a family signs ONE form and is
+               never sent the consent form as a second. The terms are filled
+               from consent-clauses.js, the single source of truth; intake.js
+               refuses to send if that file did not load, because a tick on
+               terms nobody was shown is not an acceptance. -->
+          <div class="terms-head">
+            <span>The Young Author Agreement, in short</span>
+            <a href="https://bukmukpublishing.com/agreement" data-agreement-link target="_blank" rel="noopener">Read it in full →</a>
+          </div>
+          <p class="lede" style="font-size:16px; margin:10px 0 0; color:var(--ink-soft)">
+            The full agreement is linked above and is what you are accepting. This is the same thing in plain English, so you are not asked to tick something you have not read.
+          </p>
+          <div class="terms">
+            <ol data-clause-list></ol>
+          </div>
+          <p class="scrollhint" id="scrollHint">Scroll the box to the end</p>
+
+          <div class="consent commercial" style="margin-top:18px">
+            <label>
+              <input type="checkbox" name="agreementAccepted" required>
+              <span>
+                <span data-clause="agreementAccepted">I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.</span>
+                <span class="req-tag">required</span>
+              </span>
+            </label>
+          </div>
+
           <div class="sig-row">
             <div class="field" data-required>
               <label class="cap" for="guardianSignature">Type your full name as a signature <span class="req">required</span></label>
@@ -589,6 +617,7 @@
         <p>If anything we send back changes the meaning of what your child wrote, we ask you both first. Always.</p>
         <p>Tick the photo box and the photo appears in the printed book. Tick the promotion box too and it may also appear on our website, on social media and on the shop listing. Leave either unticked and we do not use it that way.</p>
         <p>If your child picked a pen name, only the pen name appears in the book. Their real name stays with Bukmuk and is never published.</p>
+        <p>The agreement covers the rest: your child's royalty, refunds, and your approval before we print. It is on this page so this one form is all we need from you.</p>
         <p>Withdraw any time before publication: write to us and we delete the story and photo from our systems. We cannot recall copies that are already printed.</p>
         <p class="editor-contact">Questions?<br>
           <a href="mailto:helpdesk@bukmuk.com" style="color:var(--blue); text-decoration:none">helpdesk@bukmuk.com</a><br>
@@ -634,7 +663,7 @@
   </div>
 </footer>
 
-<script src="/consent-clauses.js?v=20260831-consent"></script>
-<script src="/intake.js?v=20260910ages6to17" defer></script>
+<script src="/consent-clauses.js?v=20260911-agreement"></script>
+<script src="/intake.js?v=20260911-agreement" defer></script>
 </body>
 </html>
