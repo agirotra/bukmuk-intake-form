@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260911-agreement">
+<link rel="stylesheet" href="/styles.css?v=20260911-attention">
 <style>
   /* Page-local only. The short-terms ledger (.terms, .terms-head, .scrollhint,
      .consent.commercial) moved to styles.css on 2026-09-11, when the story
@@ -128,7 +128,7 @@
           </p>
 
           <div class="consent" style="margin-top:14px">
-            <label>
+            <label data-attention-name="The tick allowing us to publish the story">
               <input type="checkbox" name="consentPublish" required>
               <span>
                 <span data-clause="consentPublish">I allow Bukmuk to lightly edit (keeping the child's voice) and publish this story in a Bukmuk book that may be sold on public platforms including Amazon. I understand I can request withdrawal before publication.</span>
@@ -211,7 +211,7 @@
           <p class="scrollhint" id="scrollHint">Scroll the box to the end</p>
 
           <div class="consent commercial" style="margin-top:18px">
-            <label>
+            <label data-attention-name="The Young Author Agreement tick">
               <input type="checkbox" name="agreementAccepted" required>
               <span>
                 <span data-clause="agreementAccepted">I am the parent or lawful guardian of the author named above. I have read the short version above, and I accept the Bukmuk Young Author Agreement in full.</span>
@@ -319,7 +319,8 @@
   </div>
 </footer>
 
-<script src="/consent-clauses.js?v=20260831-consent"></script>
-<script src="/consent.js?v=20260831-code01" defer></script>
+<script src="/consent-clauses.js?v=20260911-agreement"></script>
+<script src="/form-attention.js?v=20260911-attention"></script>
+<script src="/consent.js?v=20260911-attention" defer></script>
 </body>
 </html>

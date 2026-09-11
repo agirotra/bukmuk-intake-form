@@ -585,6 +585,22 @@ h1.section-title em{
   vertical-align: 2px;
 }
 
+/* A required tickbox that is still unticked, marked the same red as a field,
+   with a line saying what to do. form-attention.js marks it. */
+.consent label.error{
+  box-shadow: inset 3px 0 0 var(--err);
+  background: rgba(177,38,29,.05);
+  padding-left: 12px;
+}
+.consent label.error input[type=checkbox]{ border-color: var(--err); border-width: 2px }
+.consent label.error > span::after{
+  content: "Please tick this box to continue";
+  display: block;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--err);
+  margin-top: 8px;
+}
+
 /* ── The Young Author Agreement, in short ─────────────────────────────────
    Shared by both forms since 2026-09-11 (it lived in consent.html alone). */
 .terms{

@@ -258,18 +258,24 @@
       } else ok(photoEl);
     }
 
+    // The two required tickboxes are marked by their row, like any field, so
+    // the parent is taken to them instead of being told a section number
+    // (form-attention.js). If that helper did not load, the sentences still
+    // say where to look.
     var errors = [];
-    if (!form.elements['consentPublish'].checked){
-      errors.push('Please tick the first box in section III. Without it we cannot publish the story.');
-    }
-    if (!form.elements['agreementAccepted'].checked){
-      errors.push('Please tick the box in section V to accept the Young Author Agreement.');
-    }
+    [['consentPublish', 'Please tick the first box in section III. Without it we cannot publish the story.'],
+     ['agreementAccepted', 'Please tick the box in section V to accept the Young Author Agreement.']
+    ].forEach(function (pair) {
+      var el = form.elements[pair[0]];
+      if (el && el.checked) return;
+      if (el && window.BUKMUK_ATTENTION) bad.push(el);
+      else errors.push(pair[1]);
+    });
     if (assent && assent.value !== 'Yes'){
       errors.push('You have told us the author is not ready. Nothing to sign yet: write to us at helpdesk@bukmuk.com and we will hold the book.');
     }
 
-    return { ok: bad.length === 0 && errors.length === 0, firstBadEl: bad[0] || null, errors: errors };
+    return { ok: bad.length === 0 && errors.length === 0, firstBadEl: bad[0] || null, errors: errors, bad: bad };
   }
 
   // ── Payload ────────────────────────────────────────────────────────────
@@ -336,11 +342,17 @@
 
     var v = validate();
     if (!v.ok){
-      submitError.textContent = v.errors.length
-        ? v.errors.join(' ')
-        : 'Some things need a second look, see the fields marked above.';
-      submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (v.firstBadEl) { try { v.firstBadEl.focus({ preventScroll: true }); } catch (e) {} }
+      // Mark, name and scroll to what needs attention (form-attention.js).
+      var ATT = window.BUKMUK_ATTENTION;
+      if (ATT){
+        ATT.report({ holders: v.bad.map(ATT.holderOf), notes: v.errors, errorEl: submitError });
+      } else {
+        submitError.textContent = v.errors.length
+          ? v.errors.join(' ')
+          : 'Some things need a second look, see the fields marked above.';
+        submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (v.firstBadEl) { try { v.firstBadEl.focus({ preventScroll: true }); } catch (e) {} }
+      }
       return;
     }
 

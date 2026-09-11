@@ -596,11 +596,14 @@
   // ─── Validation ────────────────────────────────────────────────────────
   function validate(){
     const errors = [];
+    const marked = [];   // what to point the parent at (form-attention.js)
+    const notes = [];    // problems with no field to point at, said in words
     let firstBadEl = null;
 
     function flag(fieldEl, msg){
       if (!fieldEl) return;
       fieldEl.classList.add('error');
+      marked.push(fieldEl);
       errors.push(msg);
       if (!firstBadEl){
         const inp = $('input, textarea', fieldEl);
@@ -610,7 +613,7 @@
     function ok(fieldEl){ if (fieldEl) fieldEl.classList.remove('error'); }
 
     // Clear previous errors
-    for (const f of $$('.field.error')) f.classList.remove('error');
+    for (const f of $$('.field.error, .consent label.error')) f.classList.remove('error');
 
     // Required text-ish fields (matches REQUIRED_STR in import-submissions.js)
     // 'story' is checked separately below: it has two carriers and needs one.
@@ -703,9 +706,17 @@
     // agreementAccepted joined 2026-09-11, same fresh-querySelector path.
     for (const name of ['consentPublish', 'agreementAccepted']){
       const el = document.querySelector(`input[name="${name}"]`);
-      if (!el || !el.checked){
-        errors.push(`${name} not ticked`);
-        flag(el && el.closest('.field'), `${name} not ticked`);  // also flag visually
+      if (!el){
+        errors.push(`${name} missing from the page`);
+        notes.push('Part of this page did not load. Please reload it; your typed answers are kept.');
+        continue;
+      }
+      if (!el.checked){
+        // A tickbox row is not a .field, so it is marked by its row. Until
+        // 2026-09-11 this looked for a .field, found none, marked nothing, and
+        // the parent was told to look for fields "marked above" that were not.
+        const row = window.BUKMUK_ATTENTION ? window.BUKMUK_ATTENTION.holderOf(el) : el.closest('label');
+        flag(row, `${name} not ticked`);
       }
     }
     // The agreement's terms come from consent-clauses.js. If that file did not
@@ -713,9 +724,10 @@
     // terms nobody saw is not an acceptance. Refuse rather than send it.
     if (!window.BUKMUK_CONSENT){
       errors.push('agreement terms did not load; reload the page');
+      notes.push('The agreement did not load properly. Please reload the page; your typed answers are kept, but any files will need attaching again.');
     }
 
-    return { ok: errors.length === 0, errors, firstBadEl };
+    return { ok: errors.length === 0, errors, firstBadEl, marked, notes };
   }
 
   // ─── Build the Tally-compatible payload ────────────────────────────────
@@ -815,9 +827,16 @@
 
     const v = validate();
     if (!v.ok){
-      submitError.textContent = 'Some things need a second look , see the fields marked above.';
-      submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (v.firstBadEl) try { v.firstBadEl.focus({ preventScroll: false }); } catch {}
+      // Mark, name and scroll to what needs attention (form-attention.js),
+      // rather than telling a parent to find "the fields marked above".
+      const ATT = window.BUKMUK_ATTENTION;
+      if (ATT){
+        ATT.report({ holders: v.marked, notes: v.notes, errorEl: submitError });
+      } else {
+        submitError.textContent = 'Some things need a second look , see the fields marked above.';
+        submitError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (v.firstBadEl) try { v.firstBadEl.focus({ preventScroll: false }); } catch {}
+      }
       return;
     }
 
